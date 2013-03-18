@@ -3,7 +3,6 @@
  */
 package javavis.jip2d.functions;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 import javavis.base.JIPException;
@@ -115,20 +114,56 @@ public class FPanorama extends Function2D {
 			JIPGeomPoint nitzSegunda, JIPBmpByte primera, JIPBmpByte segunda)
 			throws JIPException {
 		ventana = getParamValueInt("ventana");
-
-		float mediaPrimera = 0, mediaSegunda = 0;
+		double divisor, mediaPrimera, mediaSegunda;
 
 		Sequence recortadosPrimera = getRecortes(nitzPrimera, primera);
-		ArrayList<Float> mediasPrimera = new ArrayList<Float>();
+		double divisorPrimera;
+		ArrayList<Double> mediasPrimera = new ArrayList<Double>();
+		ArrayList<Double> divisoresPrimera = new ArrayList<Double>();
 		for (int i = 0; i < recortadosPrimera.getNumFrames(); i++) {
-			mediasPrimera.add(calcularMedia((JIPBmpByte)recortadosPrimera.getFrame(i)));
+			double media = calcularMedia((JIPBmpByte)recortadosPrimera.getFrame(i));
+			mediasPrimera.add(media);
+			//System.out.println(media);
+			divisorPrimera = calcularDivisor((JIPBmpByte)recortadosPrimera.getFrame(i),media);
+			divisoresPrimera.add(divisorPrimera);
 		}
 		
 		Sequence recortadosSegunda = getRecortes(nitzSegunda, segunda);
-		ArrayList<Float> mediasSegunda = new ArrayList<Float>();
-		for (int i = 0; i < recortadosPrimera.getNumFrames(); i++) {
-			mediasSegunda.add(calcularMedia((JIPBmpByte)recortadosPrimera.getFrame(i)));
+		double divisorSegunda;
+		ArrayList<Double> mediasSegunda = new ArrayList<Double>();
+		ArrayList<Double> divisoresSegunda = new ArrayList<Double>();
+		for (int i = 0; i < recortadosSegunda.getNumFrames(); i++) {
+			double media = calcularMedia((JIPBmpByte)recortadosSegunda.getFrame(i));
+			mediasSegunda.add(media);
+			System.out.println(media);
+			divisorSegunda = calcularDivisor((JIPBmpByte)recortadosPrimera.getFrame(i),media);
+			divisoresSegunda.add(divisorSegunda);
 		}
+		
+		ArrayList<Double> resultados = new ArrayList<Double>();
+		// para cada recorte de la primera imagen
+		for (int i = 0; i < divisoresPrimera.size(); i++) {
+			// para cada recorte de la segunda imagen
+			for (int j = 0; j < divisoresSegunda.size(); j++) {
+				divisor = divisoresPrimera.get(i)* divisoresSegunda.get(j);
+				mediaPrimera = mediasPrimera.get(i);
+				mediaSegunda = mediasSegunda.get(j);
+				double acumulado = 0;
+				double imagen1[] = ((JIPBmpByte) recortadosPrimera.getFrame(i)).getAllPixels(); 
+				double imagen2[] = ((JIPBmpByte) recortadosSegunda.getFrame(j)).getAllPixels();
+				
+				for (int k = 0; k < imagen1.length; k++) {
+					acumulado += imagen1[k] - mediaPrimera * imagen2[k] - mediaSegunda; 
+				}
+				double res = acumulado / divisor;
+				resultados.add(res);
+				System.out.println("[" + i + ", " + j + "] " + res);
+				
+			}
+			
+		}
+		System.out.println("Primera.length = " + recortadosPrimera.getNumFrames() + "Segunda.length = " + recortadosSegunda.getNumFrames());
+		recortadosPrimera.appendSequence(recortadosSegunda);
 		return recortadosPrimera;
 	}
 
@@ -147,7 +182,6 @@ public class FPanorama extends Function2D {
 		for (int j = 0; j < nitz.getLength(); j++) {
 			Point2D puntoPrimera = nitz.getPoint(j);
 
-			double bytesPrimera[] = imagen.getAllPixels();
 			int anchoPrimera = imagen.getWidth();
 			int altoPrimera = imagen.getHeight();
 
@@ -193,12 +227,6 @@ public class FPanorama extends Function2D {
 						+ e.getMessage());
 				throw aux;
 			}
-			
-/*
-			for (int k = 0; k < nitzSegunda.getLength(); k++) {
-				Point2D	puntoSegunda = nitzPrimera.getPoint(j);
-			}*/
-			 
 		}
 		return recortados;
 	}
@@ -219,11 +247,29 @@ public class FPanorama extends Function2D {
 		for (int i =0; i < imagen.getHeight(); i++) {
 			for (int l = 0; l < imagen.getWidth(); l++) {
 				acumulado += bytes[i*imagen.getWidth() + l]; 
-				System.out.println("["+i+","+l+"]="+bytes[i*imagen.getWidth() + l]);
+				//System.out.println("["+i+","+l+"]="+bytes[i*imagen.getWidth() + l]);
 			} 
 		} 
 		media = (float)acumulado/(float)tamanoTotalVentana;
 		return media;
 	}
 
+	/**
+	 * @param imagen
+	 * @param ancho
+	 * @param filaInicioPrimera
+	 * @param columnaInicioPrimera
+	 * @param tamanoVentana
+	 * @throws JIPException 
+	 */
+	private double calcularDivisor(JIPBmpByte imagen, double media) throws JIPException {
+		double bytes[] = imagen.getAllPixels();
+		double acumulado = 0;
+		for (int i = 0; i < bytes.length; i++) {
+			double aux = bytes[i] - media;
+			acumulado += aux*aux;
+		}
+		return Math.sqrt(acumulado);
+	}
+	
 }
