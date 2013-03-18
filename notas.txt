@@ -1,0 +1,21 @@
+hay que implementar processImg y Sequence processSeq(Sequence seq) throws JIPException{...}
+
+processImg lanzará una excepción que indique que esa función no trabaja con imágenes individuales
+
+Sequence ->
+	getNumFrames():int => número de imágenes en la secuencia
+	getFrame(int):JIPImage => devuelve la imágen en la posición indicada
+
+Si la función no recibe >=2 imágenes, lanza excepción
+
+hay que ajustar el parámetro de nitzberg
+Nitzberg():JIPGeomPoint
+
+JIPGeomPoint ->
+	getLength():int => número de puntos
+	getPoint(int):point2D => devuelve el punto en la posición indicada
+
+point2D ->
+	getX() ---- columna
+	getY()
+

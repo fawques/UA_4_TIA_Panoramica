@@ -1,0 +1,32 @@
+Norms that must observe functions in order to be included in JavaVis
+--------------------------------------------------------------------
+
+- An example of execution, with the original image (the test images provided with JavaVis can 
+  be used) and the result one, indicating the parameters used.
+- JIPException must be thrown
+- The function must contain enough comments so that the function can be understood. 
+  At the beginning of the class a generic text (in English, of course) must appear. 
+  This is an example of Binarize function.
+  
+/**
+ * It converts a BYTE image into a binary image. To do that, a pixel in the output image 
+ * is 1 if the value in the corresponding input image is between the range [u1, u2], and 
+ * 0 otherwise.<br />
+ * It applies to BYTE image.<br /><br />
+ * <strong>Input parameters:</strong><br />
+ * <ul>
+ * <li><em>img</em>: The input image. It has to be a BYTE type.</li>
+ * <li><em>u1</em>: Integer value which indicates the lower bound of the range to considerer the 
+ * pixel as 1 (default 128).</li>
+ * <li><em>u2</em>: Integer value which indicates the upper bound of the range to considerer the 
+ * pixel as 1 (default 255).</li>
+ * </ul><br />
+ * <strong>Image result:</strong><br />
+ * <ul>
+ * <li>The original image in BIT type.</li>
+ * </ul><br />
+ */
+
+  The text here will appear at the web page.
+  
+  

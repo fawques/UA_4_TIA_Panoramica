@@ -1,0 +1,21 @@
+[2013-02-21 10:46:04,515] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: La función debe recibir una secuencia, no una imagen
+[2013-02-21 10:54:45,921] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: La función debe aplicarse sobre una secuencia, no una imagen
+[2013-02-21 10:54:58,234] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: La función debe aplicarse sobre una secuencia, no una imagen
+[2013-02-21 11:08:22,578] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: Function2D.setParamValue: parameter not found
+[2013-02-28 10:27:07,171] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: Function2D.setParamValue: parameter not found
+[2013-02-28 10:27:16,296] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: Function2D.setParamValue: parameter not found
+[2013-03-07 11:14:35,746] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: Dimensions exceed image size.
+[2013-03-14 10:30:49,918] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: Dimensions exceed image size.
+[2013-03-14 10:31:24,301] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: Dimensions exceed image size.
+[2013-03-14 10:31:37,411] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: Dimensions exceed image size.
+[2013-03-14 10:31:57,932] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: La función debe aplicarse sobre una secuencia, no una imagen
+[2013-03-14 10:32:14,780] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: Dimensions exceed image size.
+[2013-03-14 10:45:27,814] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: ERROR RECORTE - Dimensions exceed image size.
+[2013-03-14 10:50:34,402] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: ERROR RECORTE - Dimensions exceed image size.
+[2013-03-14 10:51:02,830] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: ERROR RECORTE - Dimensions exceed image size.
+[2013-03-14 10:52:13,302] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: La función debe aplicarse sobre una secuencia, no una imagen
+[2013-03-14 10:53:09,607] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: ERROR RECORTE - Dimensions exceed image size.
+[2013-03-14 10:54:07,645] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: ERROR RECORTE - Dimensions exceed image size.
+[2013-03-14 10:55:16,928] ERROR(javavis.jip2d.gui.Gui2D$DoAction.nnew(Gui2D.java:1545)) - java.lang.NullPointerException
+[2013-03-14 10:55:26,538] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: ERROR RECORTE - Dimensions exceed image size.
+[2013-03-14 11:04:56,238] ERROR(javavis.jip2d.gui.Gui2D$DoAction.run(Gui2D.java:1369)) - javavis.base.JIPException: ERROR RECORTE - Dimensions exceed image size.
