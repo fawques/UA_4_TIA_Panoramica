@@ -116,7 +116,7 @@ public class FPanorama extends Function2D {
 		float mediaPrimera = 0, mediaSegunda = 0;
 
 		Sequence recortados = new Sequence();
-		for (int j = 0; j < 500/*nitzPrimera.getLength()*/; j++) {
+		for (int j = 0; j < nitzPrimera.getLength(); j++) {
 			Point2D puntoPrimera = nitzPrimera.getPoint(j);
 
 			double bytesPrimera[] = primera.getAllPixels();
@@ -125,9 +125,10 @@ public class FPanorama extends Function2D {
 
 			// calculamos la ventana...
 
-			int filaInicioPrimera = puntoPrimera.getX() - ventana;
+			int filaInicioPrimera = puntoPrimera.getY() - ventana;
 			if (filaInicioPrimera < 0) {
 				filaInicioPrimera = 0;
+				continue;
 			}
 			/*
 			 * int filaFinPrimera = puntoPrimera.getX()+ventana; if
@@ -135,9 +136,10 @@ public class FPanorama extends Function2D {
 			 * primera.getHeight()-1; }
 			 */
 
-			int columnaInicioPrimera = puntoPrimera.getY() - ventana;
-			if (filaInicioPrimera < 0) {
-				filaInicioPrimera = 0;
+			int columnaInicioPrimera = puntoPrimera.getX() - ventana;
+			if (columnaInicioPrimera < 0) {
+				columnaInicioPrimera = 0;
+				continue;
 			}
 			/*
 			 * int columnaFinPrimera = puntoPrimera.getY()+ventana; if
@@ -145,38 +147,43 @@ public class FPanorama extends Function2D {
 			 * primera.getWidth()-1; }
 			 */
 
+			int tamanoVentana = ventana * 2 + 1;
 			try {
 				Crop recorte = new Crop();
 				recorte.setParamValue("y", filaInicioPrimera);
 				recorte.setParamValue("x", columnaInicioPrimera);
-				recorte.setParamValue("w",  ventana * 2 + 1);
-				recorte.setParamValue("h", ventana * 2 + 1);
+				if(columnaInicioPrimera + (tamanoVentana)> anchoPrimera)
+					continue;
+				recorte.setParamValue("w",  tamanoVentana);
+				if(filaInicioPrimera + (tamanoVentana)> altoPrimera)
+					continue;
+				recorte.setParamValue("h", tamanoVentana);
 				JIPImage ventanaRecortada = recorte.processImg(primera);
-				recortados.addFrame(ventanaRecortada);
+				//recortados.addFrame(ventanaRecortada);
 			} catch (JIPException e) {
-				JIPException aux = new JIPException("ERROR RECORTE - "
+				JIPException aux = new JIPException("ERROR RECORTE - j = " + j + " - filaInicio = " + filaInicioPrimera + " - columnaInicio = " + columnaInicioPrimera + "- "
 						+ e.getMessage());
 				throw aux;
 			}
-			/*
-			 * // calculamos la media de la ventana int tamano =
-			 * (2*ventana+1)*(2*ventana+1); long acumulado = 0; for (int i =
-			 * filaInicioPrimera; i < filaFinPrimera; i++) { for (int l =
-			 * columnaInicioPrimera; l < columnaFinPrimera; l++) { acumulado +=
-			 * bytesPrimera[i*anchoPrimera + j]; } } mediaPrimera =
-			 * acumulado/tamano; System.out.println(mediaPrimera);
-			 * 
-			 * for (int k = 0; k < nitzSegunda.getLength(); k++) { Point2D
-			 * puntoSegunda = nitzPrimera.getPoint(j);
-			 * 
-			 * 
-			 * 
-			 * }
-			 */
+			
+			// calculamos la media de la ventana 
+			int tamanoTotalVentana =tamanoVentana*tamanoVentana;
+			long acumulado = 0; 
+			for (int i =filaInicioPrimera; i < filaInicioPrimera + tamanoVentana; i++) {
+				for (int l = columnaInicioPrimera; l < columnaInicioPrimera + tamanoVentana; l++) {
+					acumulado += bytesPrimera[i*anchoPrimera + j]; 
+				} 
+			} 
+			mediaPrimera = acumulado/tamanoTotalVentana;
+			System.out.println(mediaPrimera);
+/*
+			for (int k = 0; k < nitzSegunda.getLength(); k++) {
+				Point2D	puntoSegunda = nitzPrimera.getPoint(j);
+			}*/
+			 
 		}
 		return recortados;
 	}
-
 	/*
 	 * int flongomongo = getParamValueInt("nombre de parámetro");
 	 * System.out.println(flongomongo);
