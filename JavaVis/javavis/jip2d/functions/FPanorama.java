@@ -116,12 +116,28 @@ public class FPanorama extends Function2D {
 		float mediaPrimera = 0, mediaSegunda = 0;
 
 		Sequence recortados = new Sequence();
-		for (int j = 0; j < nitzPrimera.getLength(); j++) {
-			Point2D puntoPrimera = nitzPrimera.getPoint(j);
+		mediaPrimera = getRecortes(nitzPrimera, primera, ventana, mediaPrimera,recortados);
+		return recortados;
+	}
 
-			double bytesPrimera[] = primera.getAllPixels();
-			int anchoPrimera = primera.getWidth();
-			int altoPrimera = primera.getHeight();
+	/**
+	 * @param nitz
+	 * @param imagen
+	 * @param ventana
+	 * @param mediaPrimera
+	 * @param recortados
+	 * @return
+	 * @throws JIPException
+	 */
+	private float getRecortes(JIPGeomPoint nitz, JIPBmpByte imagen,
+			int ventana, float mediaPrimera, Sequence recortados)
+			throws JIPException {
+		for (int j = 0; j < nitz.getLength(); j++) {
+			Point2D puntoPrimera = nitz.getPoint(j);
+
+			double bytesPrimera[] = imagen.getAllPixels();
+			int anchoPrimera = imagen.getWidth();
+			int altoPrimera = imagen.getHeight();
 
 			// calculamos la ventana...
 
@@ -158,8 +174,8 @@ public class FPanorama extends Function2D {
 				if(filaInicioPrimera + (tamanoVentana)> altoPrimera)
 					continue;
 				recorte.setParamValue("h", tamanoVentana);
-				JIPImage ventanaRecortada = recorte.processImg(primera);
-				//recortados.addFrame(ventanaRecortada);
+				JIPImage ventanaRecortada = recorte.processImg(imagen);
+				recortados.addFrame(ventanaRecortada);
 			} catch (JIPException e) {
 				JIPException aux = new JIPException("ERROR RECORTE - j = " + j + " - filaInicio = " + filaInicioPrimera + " - columnaInicio = " + columnaInicioPrimera + "- "
 						+ e.getMessage());
@@ -182,29 +198,7 @@ public class FPanorama extends Function2D {
 			}*/
 			 
 		}
-		return recortados;
+		return mediaPrimera;
 	}
-	/*
-	 * int flongomongo = getParamValueInt("nombre de parámetro");
-	 * System.out.println(flongomongo);
-	 * 
-	 * 
-	 * int h,w;
-	 * 
-	 * 
-	 * JIPBmpByte img_gris = (JIPBmpByte) ctg.processImg(img);
-	 * 
-	 * h = img_gris.getHeight(); w = img_gris.getWidth();
-	 * 
-	 * for (int i = 0; i < w/2; i++) { for (int j = 0; j < h/2; j++) {
-	 * img_gris.setPixel(i, j, img_gris.getPixel(i, j)+flongomongo); } }
-	 * 
-	 * double[] vectorImagen = img_gris.getAllPixels(); for (int i = h/2*w; i <
-	 * vectorImagen.length; i++) { vectorImagen[i] -= flongomongo; }
-	 * 
-	 * img_gris.setAllPixels(vectorImagen);
-	 * 
-	 * return img_gris;
-	 */
 
 }
