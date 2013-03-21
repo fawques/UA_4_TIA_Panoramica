@@ -43,7 +43,7 @@ public class FPanorama extends Function2D {
 
 		ParamInt p1 = new ParamInt("ventana", false, true);
 		p1.setDescription("Ventana para la correlación cruzada");
-		p1.setDefault(5);
+		p1.setDefault(1);
 		addParam(p1);
 
 		ParamFloat p2 = new ParamFloat("Lambda", false, true);
@@ -135,19 +135,20 @@ public class FPanorama extends Function2D {
 		for (int i = 0; i < recortadosSegunda.getNumFrames(); i++) {
 			double media = calcularMedia((JIPBmpByte)recortadosSegunda.getFrame(i));
 			mediasSegunda.add(media);
-			System.out.println(media);
-			divisorSegunda = calcularDivisor((JIPBmpByte)recortadosPrimera.getFrame(i),media);
+			//System.out.println(media);
+			divisorSegunda = calcularDivisor((JIPBmpByte)recortadosSegunda.getFrame(i),media);
 			divisoresSegunda.add(divisorSegunda);
 		}
 		
 		ArrayList<Double> resultados = new ArrayList<Double>();
 		// para cada recorte de la primera imagen
-		for (int i = 0; i < divisoresPrimera.size(); i++) {
+		for (int i = 0; i < 1/*divisoresPrimera.size()*/; i++) {
 			// para cada recorte de la segunda imagen
-			for (int j = 0; j < divisoresSegunda.size(); j++) {
+			for (int j = 0; j < 1/*divisoresSegunda.size()*/; j++) {
 				divisor = divisoresPrimera.get(i)* divisoresSegunda.get(j);
 				mediaPrimera = mediasPrimera.get(i);
 				mediaSegunda = mediasSegunda.get(j);
+				System.out.println("media primera = " + mediaPrimera + " - media segunda = " + mediaSegunda);
 				double acumulado = 0;
 				double imagen1[] = ((JIPBmpByte) recortadosPrimera.getFrame(i)).getAllPixels(); 
 				double imagen2[] = ((JIPBmpByte) recortadosSegunda.getFrame(j)).getAllPixels();
@@ -155,14 +156,29 @@ public class FPanorama extends Function2D {
 				for (int k = 0; k < imagen1.length; k++) {
 					acumulado += imagen1[k] - mediaPrimera * imagen2[k] - mediaSegunda; 
 				}
+				
+				for (int k = 0; k < imagen1.length; k++) {
+					System.out.print("[" + imagen1[k] + "]"); 
+				}
+				System.out.println();
+				
+				for (int k = 0; k < imagen2.length; k++) {
+					System.out.print("[" + imagen2[k] + "]"); 
+				}
+				System.out.println();
+				
+				System.out.println("acumulado numerador = " + acumulado);
+				System.out.println("denominador primera parte = " + divisoresPrimera.get(i));
+				System.out.println("denominador segunda parte = " + divisoresSegunda.get(j));
+				System.out.println("acumulado denominador = " + divisor);
 				double res = acumulado / divisor;
+				System.out.println("resultado = " + res);
 				resultados.add(res);
 				System.out.println("[" + i + ", " + j + "] " + res);
 				
 			}
 			
 		}
-		System.out.println("Primera.length = " + recortadosPrimera.getNumFrames() + "Segunda.length = " + recortadosSegunda.getNumFrames());
 		recortadosPrimera.appendSequence(recortadosSegunda);
 		return recortadosPrimera;
 	}
@@ -268,7 +284,7 @@ public class FPanorama extends Function2D {
 		for (int i = 0; i < bytes.length; i++) {
 			double aux = bytes[i] - media;
 			acumulado += aux*aux;
-		}
+		}System.out.println();
 		return Math.sqrt(acumulado);
 	}
 	
