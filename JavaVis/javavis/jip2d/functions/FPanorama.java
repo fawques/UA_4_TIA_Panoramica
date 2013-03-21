@@ -142,37 +142,20 @@ public class FPanorama extends Function2D {
 		
 		ArrayList<Double> resultados = new ArrayList<Double>();
 		// para cada recorte de la primera imagen
-		for (int i = 0; i < 1/*divisoresPrimera.size()*/; i++) {
+		for (int i = 0; i < divisoresPrimera.size(); i++) {
 			// para cada recorte de la segunda imagen
-			for (int j = 0; j < 1/*divisoresSegunda.size()*/; j++) {
+			for (int j = 0; j < divisoresSegunda.size(); j++) {
 				divisor = divisoresPrimera.get(i)* divisoresSegunda.get(j);
 				mediaPrimera = mediasPrimera.get(i);
 				mediaSegunda = mediasSegunda.get(j);
-				System.out.println("media primera = " + mediaPrimera + " - media segunda = " + mediaSegunda);
 				double acumulado = 0;
 				double imagen1[] = ((JIPBmpByte) recortadosPrimera.getFrame(i)).getAllPixels(); 
 				double imagen2[] = ((JIPBmpByte) recortadosSegunda.getFrame(j)).getAllPixels();
 				
 				for (int k = 0; k < imagen1.length; k++) {
-					acumulado += imagen1[k] - mediaPrimera * imagen2[k] - mediaSegunda; 
+					acumulado += (imagen1[k] - mediaPrimera) * (imagen2[k] - mediaSegunda); 
 				}
-				
-				for (int k = 0; k < imagen1.length; k++) {
-					System.out.print("[" + imagen1[k] + "]"); 
-				}
-				System.out.println();
-				
-				for (int k = 0; k < imagen2.length; k++) {
-					System.out.print("[" + imagen2[k] + "]"); 
-				}
-				System.out.println();
-				
-				System.out.println("acumulado numerador = " + acumulado);
-				System.out.println("denominador primera parte = " + divisoresPrimera.get(i));
-				System.out.println("denominador segunda parte = " + divisoresSegunda.get(j));
-				System.out.println("acumulado denominador = " + divisor);
 				double res = acumulado / divisor;
-				System.out.println("resultado = " + res);
 				resultados.add(res);
 				System.out.println("[" + i + ", " + j + "] " + res);
 				
