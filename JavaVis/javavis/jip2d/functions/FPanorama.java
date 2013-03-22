@@ -4,6 +4,7 @@
 package javavis.jip2d.functions;
 
 import java.util.ArrayList;
+import java.util.PriorityQueue;
 
 import javavis.base.JIPException;
 import javavis.base.parameter.ParamFloat;
@@ -15,6 +16,7 @@ import javavis.jip2d.base.Sequence;
 import javavis.jip2d.base.bitmaps.JIPBmpByte;
 import javavis.jip2d.base.geometrics.JIPGeomPoint;
 import javavis.jip2d.base.geometrics.Point2D;
+import javavis.jip2d.base.geometrics.Segment;
 
 /**
  * @author EPS
@@ -92,10 +94,7 @@ public class FPanorama extends Function2D {
 
 			JIPBmpByte primera = (JIPBmpByte) grises.getFrame(i);
 			JIPBmpByte segunda = (JIPBmpByte) grises.getFrame(i + 1);
-
-			// TODO: borrar esto, es para probar
-			seq.appendSequence(recorrerPuntos(nitzPrimera, nitzSegunda,
-					primera, segunda));
+			ArrayList<Segment> desplazamientos = recorrerPuntos(nitzPrimera, nitzSegunda, primera, segunda);
 		}
 
 		return seq;
@@ -110,64 +109,83 @@ public class FPanorama extends Function2D {
 	 *            TODO
 	 * @throws JIPException
 	 */
-	private Sequence recorrerPuntos(JIPGeomPoint nitzPrimera,
+	private ArrayList<Segment> recorrerPuntos(JIPGeomPoint nitzPrimera,
 			JIPGeomPoint nitzSegunda, JIPBmpByte primera, JIPBmpByte segunda)
 			throws JIPException {
 		ventana = getParamValueInt("ventana");
 		double divisor, mediaPrimera, mediaSegunda;
+		ArrayList<Segment> desplazamientos = new ArrayList<Segment>();
+		
 
-		Sequence recortadosPrimera = getRecortes(nitzPrimera, primera);
+		ArrayList<Recorte> recortadosPrimera = getRecortes(nitzPrimera, primera);
 		double divisorPrimera;
 		ArrayList<Double> mediasPrimera = new ArrayList<Double>();
 		ArrayList<Double> divisoresPrimera = new ArrayList<Double>();
-		for (int i = 0; i < recortadosPrimera.getNumFrames(); i++) {
-			double media = calcularMedia((JIPBmpByte)recortadosPrimera.getFrame(i));
+		for (int i = 0; i < recortadosPrimera.size(); i++) {
+			double media = calcularMedia((JIPBmpByte)recortadosPrimera.get(i).getRecorte());
 			mediasPrimera.add(media);
 			//System.out.println(media);
-			divisorPrimera = calcularDivisor((JIPBmpByte)recortadosPrimera.getFrame(i),media);
+			divisorPrimera = calcularDivisor((JIPBmpByte)recortadosPrimera.get(i).getRecorte(),media);
 			divisoresPrimera.add(divisorPrimera);
 		}
 		
-		Sequence recortadosSegunda = getRecortes(nitzSegunda, segunda);
+		ArrayList<Recorte> recortadosSegunda = getRecortes(nitzSegunda, segunda);
 		double divisorSegunda;
 		ArrayList<Double> mediasSegunda = new ArrayList<Double>();
 		ArrayList<Double> divisoresSegunda = new ArrayList<Double>();
-		for (int i = 0; i < recortadosSegunda.getNumFrames(); i++) {
-			double media = calcularMedia((JIPBmpByte)recortadosSegunda.getFrame(i));
+		for (int i = 0; i < recortadosSegunda.size(); i++) {
+			double media = calcularMedia((JIPBmpByte)recortadosSegunda.get(i).getRecorte());
 			mediasSegunda.add(media);
 			//System.out.println(media);
-			divisorSegunda = calcularDivisor((JIPBmpByte)recortadosSegunda.getFrame(i),media);
+			divisorSegunda = calcularDivisor((JIPBmpByte)recortadosSegunda.get(i).getRecorte(),media);
 			divisoresSegunda.add(divisorSegunda);
 		}
 		
-		ArrayList<Double> resultados = new ArrayList<Double>();
+		
+		//ArrayList<Double> resultados = new ArrayList<Double>();
 		// para cada recorte de la primera imagen
 		for (int i = 0; i < divisoresPrimera.size(); i++) {
+			PriorityQueue<Correlacion> correlaciones = new PriorityQueue<FPanorama.Correlacion>();
+			mediaPrimera = mediasPrimera.get(i);
+			Recorte recortePrimera = recortadosPrimera.get(i);
+			double imagen1[] = ((JIPBmpByte) recortePrimera.getRecorte()).getAllPixels();
 			// para cada recorte de la segunda imagen
 			for (int j = 0; j < divisoresSegunda.size(); j++) {
 				divisor = divisoresPrimera.get(i)* divisoresSegunda.get(j);
-				mediaPrimera = mediasPrimera.get(i);
+				
 				mediaSegunda = mediasSegunda.get(j);
+				
+				Recorte recorteSegunda = recortadosPrimera.get(j);
+				Correlacion nueva = new Correlacion();
+				nueva.setPrimerPunto(recortePrimera.getPunto());
+				nueva.setSegundoPunto(recorteSegunda.getPunto());
 				double acumulado = 0;
-				double imagen1[] = ((JIPBmpByte) recortadosPrimera.getFrame(i)).getAllPixels(); 
-				double imagen2[] = ((JIPBmpByte) recortadosSegunda.getFrame(j)).getAllPixels();
+				 
+				double imagen2[] = ((JIPBmpByte) recorteSegunda.getRecorte()).getAllPixels();
 				
 				for (int k = 0; k < imagen1.length; k++) {
 					acumulado += (imagen1[k] - mediaPrimera) * (imagen2[k] - mediaSegunda); 
 				}
 				double res = acumulado / divisor;
-				resultados.add(res);
-				System.out.println("[" + i + ", " + j + "] " + res);
-				
+				nueva.setCorrelacion(res);
+				correlaciones.add(nueva);
+				//resultados.add(res);
+				//System.out.println("[" + i + ", " + j + "] " + res);
+			}
+			Correlacion CC1 = correlaciones.poll();
+			Correlacion CC2 = correlaciones.poll();
+			
+			if(CC1.getCorrelacion()*getParamValueFloat("Lambda")>CC2.getCorrelacion()) {
+				desplazamientos.add(new Segment(CC1.getPrimerPunto(), CC1.getSegundoPunto()));
 			}
 			
 		}
-		recortadosPrimera.appendSequence(recortadosSegunda);
-		return recortadosPrimera;
+		
+		return desplazamientos;
 	}
 
 	/**
-	 * @param nitz
+	 * @param nitz imagen con los puntos calculados por Nitzberg.
 	 * @param imagen
 	 * @param ventana
 	 * @param mediaPrimera
@@ -175,18 +193,20 @@ public class FPanorama extends Function2D {
 	 * @return
 	 * @throws JIPException
 	 */
-	private Sequence getRecortes(JIPGeomPoint nitz, JIPBmpByte imagen)
+	private ArrayList<Recorte> getRecortes(JIPGeomPoint nitz, JIPBmpByte imagen)
 			throws JIPException {
-		Sequence recortados = new Sequence();
+		ArrayList<Recorte >recortados = new ArrayList<FPanorama.Recorte>();
 		for (int j = 0; j < nitz.getLength(); j++) {
-			Point2D puntoPrimera = nitz.getPoint(j);
+			Recorte nuevo = new Recorte();
+			Point2D punto = nitz.getPoint(j);
 
+			
 			int anchoPrimera = imagen.getWidth();
 			int altoPrimera = imagen.getHeight();
 
 			// calculamos la ventana...
 
-			int filaInicioPrimera = puntoPrimera.getY() - ventana;
+			int filaInicioPrimera = punto.getY() - ventana;
 			if (filaInicioPrimera < 0) {
 				filaInicioPrimera = 0;
 				continue;
@@ -197,7 +217,7 @@ public class FPanorama extends Function2D {
 			 * primera.getHeight()-1; }
 			 */
 
-			int columnaInicioPrimera = puntoPrimera.getX() - ventana;
+			int columnaInicioPrimera = punto.getX() - ventana;
 			if (columnaInicioPrimera < 0) {
 				columnaInicioPrimera = 0;
 				continue;
@@ -220,7 +240,9 @@ public class FPanorama extends Function2D {
 					continue;
 				recorte.setParamValue("h", tamanoVentana);
 				JIPImage ventanaRecortada = recorte.processImg(imagen);
-				recortados.addFrame(ventanaRecortada);
+				nuevo.setPunto(punto);
+				nuevo.setRecorte(ventanaRecortada);
+				recortados.add(nuevo);
 			} catch (JIPException e) {
 				JIPException aux = new JIPException("ERROR RECORTE - j = " + j + " - filaInicio = " + filaInicioPrimera + " - columnaInicio = " + columnaInicioPrimera + "- "
 						+ e.getMessage());
@@ -267,8 +289,71 @@ public class FPanorama extends Function2D {
 		for (int i = 0; i < bytes.length; i++) {
 			double aux = bytes[i] - media;
 			acumulado += aux*aux;
-		}System.out.println();
+		}
 		return Math.sqrt(acumulado);
+	}
+	
+	class Correlacion implements Comparable<Correlacion>{
+		private Point2D primerPunto, segundoPunto;
+		private double correlacion;
+		
+		public Correlacion() {}
+		
+		public double getCorrelacion(){
+			return correlacion;
+		}
+		
+		public Point2D getPrimerPunto(){
+			return primerPunto;
+		}
+		
+		public Point2D getSegundoPunto(){
+			return segundoPunto;
+		}
+		
+		public void setCorrelacion(double corr){
+			correlacion = corr;
+		}
+		public void setPrimerPunto(Point2D punto){
+			primerPunto = punto;
+		}
+		public void setSegundoPunto(Point2D punto){
+			segundoPunto = punto;
+		}
+
+		@Override
+		public int compareTo(Correlacion o) {
+			if (o.getCorrelacion() > correlacion)
+				return 1;
+			else if (o.getCorrelacion() < correlacion)
+				return -1;
+			else
+				return 0;
+		}
+		
+		public String toString() {
+			return "["+primerPunto+"]->["+segundoPunto+"]"+correlacion;
+		}
+		
+	}
+	
+	class Recorte{
+		private Point2D punto;
+		private JIPImage recorte;
+		
+		public Point2D getPunto() {
+			return punto;
+		}
+		public JIPImage getRecorte() {
+			return recorte;
+		}
+		public void setPunto(Point2D punto) {
+			this.punto = punto;
+		}
+		public void setRecorte(JIPImage recorte) {
+			this.recorte = recorte;
+		}
+		
 	}
 	
 }
