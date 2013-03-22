@@ -15,6 +15,7 @@ import javavis.jip2d.base.JIPImage;
 import javavis.jip2d.base.Sequence;
 import javavis.jip2d.base.bitmaps.JIPBmpByte;
 import javavis.jip2d.base.geometrics.JIPGeomPoint;
+import javavis.jip2d.base.geometrics.JIPGeomSegment;
 import javavis.jip2d.base.geometrics.Point2D;
 import javavis.jip2d.base.geometrics.Segment;
 
@@ -95,6 +96,23 @@ public class FPanorama extends Function2D {
 			JIPBmpByte primera = (JIPBmpByte) grises.getFrame(i);
 			JIPBmpByte segunda = (JIPBmpByte) grises.getFrame(i + 1);
 			ArrayList<Segment> desplazamientos = recorrerPuntos(nitzPrimera, nitzSegunda, primera, segunda);
+			JIPBmpByte previsualizacion = new JIPBmpByte(Math.max(primera.getWidth(),segunda.getWidth()), primera.getHeight() + segunda.getHeight());
+			double[] bytesPrimera = primera.getAllPixels();
+			double[] bytesSegunda = segunda.getAllPixels();
+			double[] bytesPrev = new double[bytesPrimera.length + bytesSegunda.length];
+			System.arraycopy(bytesPrimera, 0, bytesPrev, 0, bytesPrimera.length);
+			System.arraycopy(bytesSegunda, 0, bytesPrev, bytesPrimera.length, bytesSegunda.length);
+			previsualizacion.setAllPixels(bytesPrev);
+			seq.addFrame(previsualizacion);
+			JIPGeomSegment previsualizacionSegmentos = new JIPGeomSegment(previsualizacion.getWidth(), previsualizacion.getHeight());
+			for(int j = 0; j<desplazamientos.size();j++) {
+				Segment segmento = desplazamientos.get(j);
+				Point2D destino = segmento.getEnd();
+				destino.setY(destino.getY()+primera.getHeight());
+				segmento.setEnd(destino);
+				previsualizacionSegmentos.addSegment(segmento);
+			}
+			seq.addFrame(previsualizacionSegmentos);
 		}
 
 		return seq;
@@ -144,18 +162,18 @@ public class FPanorama extends Function2D {
 		
 		//ArrayList<Double> resultados = new ArrayList<Double>();
 		// para cada recorte de la primera imagen
-		for (int i = 0; i < divisoresPrimera.size(); i++) {
+		for (int i = 0; i < recortadosPrimera.size(); i++) {
 			PriorityQueue<Correlacion> correlaciones = new PriorityQueue<FPanorama.Correlacion>();
 			mediaPrimera = mediasPrimera.get(i);
 			Recorte recortePrimera = recortadosPrimera.get(i);
 			double imagen1[] = ((JIPBmpByte) recortePrimera.getRecorte()).getAllPixels();
 			// para cada recorte de la segunda imagen
-			for (int j = 0; j < divisoresSegunda.size(); j++) {
+			for (int j = 0; j < recortadosSegunda.size(); j++) {
 				divisor = divisoresPrimera.get(i)* divisoresSegunda.get(j);
 				
 				mediaSegunda = mediasSegunda.get(j);
 				
-				Recorte recorteSegunda = recortadosPrimera.get(j);
+				Recorte recorteSegunda = recortadosSegunda.get(j);
 				Correlacion nueva = new Correlacion();
 				nueva.setPrimerPunto(recortePrimera.getPunto());
 				nueva.setSegundoPunto(recorteSegunda.getPunto());
