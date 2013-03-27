@@ -4,7 +4,10 @@
 package javavis.jip2d.functions;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.PriorityQueue;
+
 
 import javavis.base.JIPException;
 import javavis.base.parameter.ParamFloat;
@@ -46,12 +49,12 @@ public class FPanorama extends Function2D {
 
 		ParamInt p1 = new ParamInt("ventana", false, true);
 		p1.setDescription("Ventana para la correlación cruzada");
-		p1.setDefault(1);
+		p1.setDefault(50);
 		addParam(p1);
 
 		ParamFloat p2 = new ParamFloat("Lambda", false, true);
 		p2.setDescription("Margen de error para considerar un punto equivalente");
-		p2.setDefault(0.5f);
+		p2.setDefault(0.7f);
 		addParam(p2);
 
 	}
@@ -85,6 +88,7 @@ public class FPanorama extends Function2D {
 
 		grises = ctg.processSeq(seq);
 		seq = nitz.processSeq(grises);
+		seq.appendSequence(original);
 
 		for (int i = 0; i < frames - 1; i++) {// recorremos desde el primero
 												// hasta el penúltimo, y
@@ -96,15 +100,22 @@ public class FPanorama extends Function2D {
 			JIPBmpByte primera = (JIPBmpByte) grises.getFrame(i);
 			JIPBmpByte segunda = (JIPBmpByte) grises.getFrame(i + 1);
 			ArrayList<Segment> desplazamientos = recorrerPuntos(nitzPrimera, nitzSegunda, primera, segunda);
+			Collections.sort(desplazamientos,new segmentComparator());
 			JIPBmpByte previsualizacion = new JIPBmpByte(Math.max(primera.getWidth(),segunda.getWidth()), primera.getHeight() + segunda.getHeight());
-			double[] bytesPrimera = primera.getAllPixels();
-			double[] bytesSegunda = segunda.getAllPixels();
-			double[] bytesPrev = new double[bytesPrimera.length + bytesSegunda.length];
-			System.arraycopy(bytesPrimera, 0, bytesPrev, 0, bytesPrimera.length);
-			System.arraycopy(bytesSegunda, 0, bytesPrev, bytesPrimera.length, bytesSegunda.length);
-			previsualizacion.setAllPixels(bytesPrev);
+			double[] pixelesPrimera = primera.getAllPixels();
+			double[] pixelesSegunda = segunda.getAllPixels();
+			double[] pixelesPrev = new double[pixelesPrimera.length + pixelesSegunda.length];
+			System.arraycopy(pixelesPrimera, 0, pixelesPrev, 0, pixelesPrimera.length);
+			System.arraycopy(pixelesSegunda, 0, pixelesPrev, pixelesPrimera.length, pixelesSegunda.length);
+			previsualizacion.setAllPixels(pixelesPrev);
 			seq.addFrame(previsualizacion);
 			JIPGeomSegment previsualizacionSegmentos = new JIPGeomSegment(previsualizacion.getWidth(), previsualizacion.getHeight());
+			int desplX,desplY;
+			Segment mediana = desplazamientos.get(desplazamientos.size()/2);
+			desplX = mediana.getBegin().getX() - mediana.getEnd().getX();
+			desplY = mediana.getBegin().getY() - mediana.getEnd().getY();
+			System.out.println("Desplazamiento: [" + desplX + ", " + desplY + "]");
+			
 			for(int j = 0; j<desplazamientos.size();j++) {
 				Segment segmento = desplazamientos.get(j);
 				Point2D destino = segmento.getEnd();
@@ -113,9 +124,38 @@ public class FPanorama extends Function2D {
 				previsualizacionSegmentos.addSegment(segmento);
 			}
 			seq.addFrame(previsualizacionSegmentos);
+			
+			
+			
+			JIPBmpByte panoramica = crearPanoramica(primera, segunda,
+					pixelesPrimera, pixelesSegunda, desplX, desplY);
+			seq.addFrame(panoramica);
 		}
 
 		return seq;
+	}
+
+	/**
+	 * @param primera
+	 * @param segunda
+	 * @param pixelesPrimera
+	 * @param pixelesSegunda
+	 * @param desplX
+	 * @param desplY
+	 * @return
+	 * @throws JIPException
+	 */
+	private JIPBmpByte crearPanoramica(JIPBmpByte primera, JIPBmpByte segunda,double[] pixelesPrimera, double[] pixelesSegunda, int desplX,int desplY) throws JIPException {
+		int anchoFinal = primera.getWidth() + segunda.getWidth();
+		int altoFinal = primera.getHeight() + segunda.getHeight();
+		JIPBmpByte panoramica = new JIPBmpByte(anchoFinal, altoFinal);
+		for(int j = 0; j < pixelesPrimera.length; j++) {
+			panoramica.setPixel(j%primera.getWidth(), j/primera.getWidth(), pixelesPrimera[j]);
+		}
+		for(int j = 0; j < pixelesSegunda.length; j++) {
+			panoramica.setPixel((j%segunda.getWidth())+desplX, (j/segunda.getWidth())+desplY, pixelesSegunda[j]);
+		}
+		return panoramica;
 	}
 
 	/**
@@ -193,7 +233,7 @@ public class FPanorama extends Function2D {
 			Correlacion CC1 = correlaciones.poll();
 			Correlacion CC2 = correlaciones.poll();
 			
-			if(CC1.getCorrelacion()*getParamValueFloat("Lambda")>CC2.getCorrelacion()) {
+			if(CC1 != null && CC2!=null && CC1.getCorrelacion()*getParamValueFloat("Lambda")>CC2.getCorrelacion()) {
 				desplazamientos.add(new Segment(CC1.getPrimerPunto(), CC1.getSegundoPunto()));
 			}
 			
@@ -370,6 +410,37 @@ public class FPanorama extends Function2D {
 		}
 		public void setRecorte(JIPImage recorte) {
 			this.recorte = recorte;
+		}
+		
+	}
+	
+	public class segmentComparator implements Comparator<Segment>{
+
+		@Override
+		public int compare(Segment arg0, Segment arg1) {
+			Point2D origen0 = arg0.getBegin();
+			Point2D origen1 = arg1.getBegin();
+			
+			Point2D destino0 = arg0.getEnd();
+			Point2D destino1 = arg1.getEnd();
+			
+			int desplX0 = destino0.getX() - origen0.getX();
+			int desplY0 = destino0.getY() - origen0.getY();
+			
+			int desplX1 = destino1.getX() - origen1.getX();
+			int desplY1 = destino1.getY() - origen1.getY();
+			
+			if(desplX0 > desplX1)
+				return 1;
+			else if(desplX0 == desplX1) {
+				if(desplY0 > desplY1) {
+					return 1;
+				}else if(desplY0 < desplY1) {
+					return -1;
+				}else
+					return 0;
+			}else
+				return -1;
 		}
 		
 	}
