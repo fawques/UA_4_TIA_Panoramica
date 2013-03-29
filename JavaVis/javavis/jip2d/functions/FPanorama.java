@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.PriorityQueue;
 
-
 import javavis.base.JIPException;
 import javavis.base.parameter.ParamFloat;
 import javavis.base.parameter.ParamInt;
@@ -17,6 +16,7 @@ import javavis.jip2d.base.FunctionGroup;
 import javavis.jip2d.base.JIPImage;
 import javavis.jip2d.base.Sequence;
 import javavis.jip2d.base.bitmaps.JIPBmpByte;
+import javavis.jip2d.base.bitmaps.JIPBmpColor;
 import javavis.jip2d.base.geometrics.JIPGeomPoint;
 import javavis.jip2d.base.geometrics.JIPGeomSegment;
 import javavis.jip2d.base.geometrics.Point2D;
@@ -49,7 +49,7 @@ public class FPanorama extends Function2D {
 
 		ParamInt p1 = new ParamInt("ventana", false, true);
 		p1.setDescription("Ventana para la correlación cruzada");
-		p1.setDefault(50);
+		p1.setDefault(5);
 		addParam(p1);
 
 		ParamFloat p2 = new ParamFloat("Lambda", false, true);
@@ -88,7 +88,6 @@ public class FPanorama extends Function2D {
 
 		grises = ctg.processSeq(seq);
 		seq = nitz.processSeq(grises);
-		seq.appendSequence(original);
 
 		for (int i = 0; i < frames - 1; i++) {// recorremos desde el primero
 												// hasta el penúltimo, y
@@ -99,38 +98,57 @@ public class FPanorama extends Function2D {
 
 			JIPBmpByte primera = (JIPBmpByte) grises.getFrame(i);
 			JIPBmpByte segunda = (JIPBmpByte) grises.getFrame(i + 1);
-			ArrayList<Segment> desplazamientos = recorrerPuntos(nitzPrimera, nitzSegunda, primera, segunda);
-			Collections.sort(desplazamientos,new segmentComparator());
-			JIPBmpByte previsualizacion = new JIPBmpByte(Math.max(primera.getWidth(),segunda.getWidth()), primera.getHeight() + segunda.getHeight());
+			ArrayList<Segment> desplazamientos = recorrerPuntos(nitzPrimera,
+					nitzSegunda, primera, segunda);
+			Collections.sort(desplazamientos, new segmentComparator());
+			JIPBmpByte previsualizacion = new JIPBmpByte(Math.max(
+					primera.getWidth(), segunda.getWidth()),
+					primera.getHeight() + segunda.getHeight());
 			double[] pixelesPrimera = primera.getAllPixels();
 			double[] pixelesSegunda = segunda.getAllPixels();
-			double[] pixelesPrev = new double[pixelesPrimera.length + pixelesSegunda.length];
-			System.arraycopy(pixelesPrimera, 0, pixelesPrev, 0, pixelesPrimera.length);
-			System.arraycopy(pixelesSegunda, 0, pixelesPrev, pixelesPrimera.length, pixelesSegunda.length);
+			double[] pixelesPrev = new double[pixelesPrimera.length
+					+ pixelesSegunda.length];
+			System.arraycopy(pixelesPrimera, 0, pixelesPrev, 0,
+					pixelesPrimera.length);
+			System.arraycopy(pixelesSegunda, 0, pixelesPrev,
+					pixelesPrimera.length, pixelesSegunda.length);
 			previsualizacion.setAllPixels(pixelesPrev);
 			seq.addFrame(previsualizacion);
-			JIPGeomSegment previsualizacionSegmentos = new JIPGeomSegment(previsualizacion.getWidth(), previsualizacion.getHeight());
-			int desplX,desplY;
-			Segment mediana = desplazamientos.get(desplazamientos.size()/2);
+			JIPGeomSegment previsualizacionSegmentos = new JIPGeomSegment(
+					previsualizacion.getWidth(), previsualizacion.getHeight());
+			int desplX, desplY;
+			Segment mediana = desplazamientos.get(desplazamientos.size() / 2);
 			desplX = mediana.getBegin().getX() - mediana.getEnd().getX();
 			desplY = mediana.getBegin().getY() - mediana.getEnd().getY();
-			System.out.println("Desplazamiento: [" + desplX + ", " + desplY + "]");
-			
-			for(int j = 0; j<desplazamientos.size();j++) {
+			System.out.println("Desplazamiento: [" + desplX + ", " + desplY
+					+ "]");
+
+			for (int j = 0; j < desplazamientos.size(); j++) {
 				Segment segmento = desplazamientos.get(j);
 				Point2D destino = segmento.getEnd();
-				destino.setY(destino.getY()+primera.getHeight());
+				destino.setY(destino.getY() + primera.getHeight());
 				segmento.setEnd(destino);
 				previsualizacionSegmentos.addSegment(segmento);
 			}
 			seq.addFrame(previsualizacionSegmentos);
-			
-			
-			
-			JIPBmpByte panoramica = crearPanoramica(primera, segunda,
-					pixelesPrimera, pixelesSegunda, desplX, desplY);
+
+			JIPImage panoramica = new JIPBmpColor(1,1);
+			if (desplX >= 0 && desplY >= 0) {
+				panoramica = crearPanoramica(
+						(JIPBmpColor) original.getFrame(i),
+						(JIPBmpColor) original.getFrame(i + 1), desplX, desplY);
+			} else if (desplX >= 0) { // desplY < 0
+				panoramica = new JIPBmpColor(50,100);
+			} else if (desplY >= 0) { // desplX < 0
+				panoramica = new JIPBmpColor(100,50);
+			}else {
+				panoramica = crearPanoramica(
+						(JIPBmpColor) original.getFrame(i + 1),
+						(JIPBmpColor) original.getFrame(i), -desplX, -desplY);
+			}
 			seq.addFrame(panoramica);
 		}
+		seq.appendSequence(original);
 
 		return seq;
 	}
@@ -145,15 +163,34 @@ public class FPanorama extends Function2D {
 	 * @return
 	 * @throws JIPException
 	 */
-	private JIPBmpByte crearPanoramica(JIPBmpByte primera, JIPBmpByte segunda,double[] pixelesPrimera, double[] pixelesSegunda, int desplX,int desplY) throws JIPException {
+	private JIPBmpColor crearPanoramica(JIPBmpColor primera,
+			JIPBmpColor segunda, int desplX, int desplY) throws JIPException {
 		int anchoFinal = primera.getWidth() + segunda.getWidth();
 		int altoFinal = primera.getHeight() + segunda.getHeight();
-		JIPBmpByte panoramica = new JIPBmpByte(anchoFinal, altoFinal);
-		for(int j = 0; j < pixelesPrimera.length; j++) {
-			panoramica.setPixel(j%primera.getWidth(), j/primera.getWidth(), pixelesPrimera[j]);
+		double pixelesPrimera[] = primera.getAllPixels();
+		double pixelesRojoPrimera[] = primera.getAllPixelsRed();
+		double pixelesAzulPrimera[] = primera.getAllPixelsBlue();
+		double pixelesVerdePrimera[] = primera.getAllPixelsGreen();
+		double pixelesSegunda[] = segunda.getAllPixels();
+		double pixelesRojoSegunda[] = segunda.getAllPixelsRed();
+		double pixelesAzulSegunda[] = segunda.getAllPixelsBlue();
+		double pixelesVerdeSegunda[] = segunda.getAllPixelsGreen();
+		JIPBmpColor panoramica = new JIPBmpColor(anchoFinal, altoFinal);
+		for (int j = 0; j < pixelesPrimera.length; j++) {
+			panoramica.setPixelBlue(j % primera.getWidth(),
+					j / primera.getWidth(), pixelesAzulPrimera[j]);
+			panoramica.setPixelRed(j % primera.getWidth(),
+					j / primera.getWidth(), pixelesRojoPrimera[j]);
+			panoramica.setPixelGreen(j % primera.getWidth(),
+					j / primera.getWidth(), pixelesVerdePrimera[j]);
 		}
-		for(int j = 0; j < pixelesSegunda.length; j++) {
-			panoramica.setPixel((j%segunda.getWidth())+desplX, (j/segunda.getWidth())+desplY, pixelesSegunda[j]);
+		for (int j = 0; j < pixelesSegunda.length; j++) {
+			panoramica.setPixelBlue(j % segunda.getWidth() + desplX,
+					(j / segunda.getWidth()) + desplY, pixelesAzulSegunda[j]);
+			panoramica.setPixelRed(j % segunda.getWidth() + desplX,
+					(j / segunda.getWidth()) + desplY, pixelesRojoSegunda[j]);
+			panoramica.setPixelGreen(j % segunda.getWidth() + desplX,
+					(j / segunda.getWidth()) + desplY, pixelesVerdeSegunda[j]);
 		}
 		return panoramica;
 	}
@@ -173,77 +210,87 @@ public class FPanorama extends Function2D {
 		ventana = getParamValueInt("ventana");
 		double divisor, mediaPrimera, mediaSegunda;
 		ArrayList<Segment> desplazamientos = new ArrayList<Segment>();
-		
 
 		ArrayList<Recorte> recortadosPrimera = getRecortes(nitzPrimera, primera);
 		double divisorPrimera;
 		ArrayList<Double> mediasPrimera = new ArrayList<Double>();
 		ArrayList<Double> divisoresPrimera = new ArrayList<Double>();
 		for (int i = 0; i < recortadosPrimera.size(); i++) {
-			double media = calcularMedia((JIPBmpByte)recortadosPrimera.get(i).getRecorte());
+			double media = calcularMedia((JIPBmpByte) recortadosPrimera.get(i)
+					.getRecorte());
 			mediasPrimera.add(media);
-			//System.out.println(media);
-			divisorPrimera = calcularDivisor((JIPBmpByte)recortadosPrimera.get(i).getRecorte(),media);
+			// System.out.println(media);
+			divisorPrimera = calcularDivisor((JIPBmpByte) recortadosPrimera
+					.get(i).getRecorte(), media);
 			divisoresPrimera.add(divisorPrimera);
 		}
-		
+
 		ArrayList<Recorte> recortadosSegunda = getRecortes(nitzSegunda, segunda);
 		double divisorSegunda;
 		ArrayList<Double> mediasSegunda = new ArrayList<Double>();
 		ArrayList<Double> divisoresSegunda = new ArrayList<Double>();
 		for (int i = 0; i < recortadosSegunda.size(); i++) {
-			double media = calcularMedia((JIPBmpByte)recortadosSegunda.get(i).getRecorte());
+			double media = calcularMedia((JIPBmpByte) recortadosSegunda.get(i)
+					.getRecorte());
 			mediasSegunda.add(media);
-			//System.out.println(media);
-			divisorSegunda = calcularDivisor((JIPBmpByte)recortadosSegunda.get(i).getRecorte(),media);
+			// System.out.println(media);
+			divisorSegunda = calcularDivisor((JIPBmpByte) recortadosSegunda
+					.get(i).getRecorte(), media);
 			divisoresSegunda.add(divisorSegunda);
 		}
-		
-		
-		//ArrayList<Double> resultados = new ArrayList<Double>();
+
+		// ArrayList<Double> resultados = new ArrayList<Double>();
 		// para cada recorte de la primera imagen
 		for (int i = 0; i < recortadosPrimera.size(); i++) {
 			PriorityQueue<Correlacion> correlaciones = new PriorityQueue<FPanorama.Correlacion>();
 			mediaPrimera = mediasPrimera.get(i);
 			Recorte recortePrimera = recortadosPrimera.get(i);
-			double imagen1[] = ((JIPBmpByte) recortePrimera.getRecorte()).getAllPixels();
+			double imagen1[] = ((JIPBmpByte) recortePrimera.getRecorte())
+					.getAllPixels();
 			// para cada recorte de la segunda imagen
 			for (int j = 0; j < recortadosSegunda.size(); j++) {
-				divisor = divisoresPrimera.get(i)* divisoresSegunda.get(j);
-				
+				divisor = divisoresPrimera.get(i) * divisoresSegunda.get(j);
+
 				mediaSegunda = mediasSegunda.get(j);
-				
+
 				Recorte recorteSegunda = recortadosSegunda.get(j);
 				Correlacion nueva = new Correlacion();
 				nueva.setPrimerPunto(recortePrimera.getPunto());
 				nueva.setSegundoPunto(recorteSegunda.getPunto());
 				double acumulado = 0;
-				 
-				double imagen2[] = ((JIPBmpByte) recorteSegunda.getRecorte()).getAllPixels();
-				
+
+				double imagen2[] = ((JIPBmpByte) recorteSegunda.getRecorte())
+						.getAllPixels();
+
 				for (int k = 0; k < imagen1.length; k++) {
-					acumulado += (imagen1[k] - mediaPrimera) * (imagen2[k] - mediaSegunda); 
+					acumulado += (imagen1[k] - mediaPrimera)
+							* (imagen2[k] - mediaSegunda);
 				}
 				double res = acumulado / divisor;
 				nueva.setCorrelacion(res);
 				correlaciones.add(nueva);
-				//resultados.add(res);
-				//System.out.println("[" + i + ", " + j + "] " + res);
+				// resultados.add(res);
+				// System.out.println("[" + i + ", " + j + "] " + res);
 			}
 			Correlacion CC1 = correlaciones.poll();
 			Correlacion CC2 = correlaciones.poll();
-			
-			if(CC1 != null && CC2!=null && CC1.getCorrelacion()*getParamValueFloat("Lambda")>CC2.getCorrelacion()) {
-				desplazamientos.add(new Segment(CC1.getPrimerPunto(), CC1.getSegundoPunto()));
+
+			if (CC1 != null
+					&& CC2 != null
+					&& CC1.getCorrelacion() * getParamValueFloat("Lambda") > CC2
+							.getCorrelacion()) {
+				desplazamientos.add(new Segment(CC1.getPrimerPunto(), CC1
+						.getSegundoPunto()));
 			}
-			
+
 		}
-		
+
 		return desplazamientos;
 	}
 
 	/**
-	 * @param nitz imagen con los puntos calculados por Nitzberg.
+	 * @param nitz
+	 *            imagen con los puntos calculados por Nitzberg.
 	 * @param imagen
 	 * @param ventana
 	 * @param mediaPrimera
@@ -253,12 +300,11 @@ public class FPanorama extends Function2D {
 	 */
 	private ArrayList<Recorte> getRecortes(JIPGeomPoint nitz, JIPBmpByte imagen)
 			throws JIPException {
-		ArrayList<Recorte >recortados = new ArrayList<FPanorama.Recorte>();
+		ArrayList<Recorte> recortados = new ArrayList<FPanorama.Recorte>();
 		for (int j = 0; j < nitz.getLength(); j++) {
 			Recorte nuevo = new Recorte();
 			Point2D punto = nitz.getPoint(j);
 
-			
 			int anchoPrimera = imagen.getWidth();
 			int altoPrimera = imagen.getHeight();
 
@@ -291,10 +337,10 @@ public class FPanorama extends Function2D {
 				Crop recorte = new Crop();
 				recorte.setParamValue("y", filaInicioPrimera);
 				recorte.setParamValue("x", columnaInicioPrimera);
-				if(columnaInicioPrimera + (tamanoVentana)> anchoPrimera)
+				if (columnaInicioPrimera + (tamanoVentana) > anchoPrimera)
 					continue;
-				recorte.setParamValue("w",  tamanoVentana);
-				if(filaInicioPrimera + (tamanoVentana)> altoPrimera)
+				recorte.setParamValue("w", tamanoVentana);
+				if (filaInicioPrimera + (tamanoVentana) > altoPrimera)
 					continue;
 				recorte.setParamValue("h", tamanoVentana);
 				JIPImage ventanaRecortada = recorte.processImg(imagen);
@@ -302,7 +348,9 @@ public class FPanorama extends Function2D {
 				nuevo.setRecorte(ventanaRecortada);
 				recortados.add(nuevo);
 			} catch (JIPException e) {
-				JIPException aux = new JIPException("ERROR RECORTE - j = " + j + " - filaInicio = " + filaInicioPrimera + " - columnaInicio = " + columnaInicioPrimera + "- "
+				JIPException aux = new JIPException("ERROR RECORTE - j = " + j
+						+ " - filaInicio = " + filaInicioPrimera
+						+ " - columnaInicio = " + columnaInicioPrimera + "- "
 						+ e.getMessage());
 				throw aux;
 			}
@@ -316,20 +364,21 @@ public class FPanorama extends Function2D {
 	 * @param filaInicioPrimera
 	 * @param columnaInicioPrimera
 	 * @param tamanoVentana
-	 * @throws JIPException 
+	 * @throws JIPException
 	 */
 	private float calcularMedia(JIPBmpByte imagen) throws JIPException {
 		float media;
 		double bytes[] = imagen.getAllPixels();
-		int tamanoTotalVentana = imagen.getHeight()*imagen.getWidth();
-		long acumulado = 0; 
-		for (int i =0; i < imagen.getHeight(); i++) {
+		int tamanoTotalVentana = imagen.getHeight() * imagen.getWidth();
+		long acumulado = 0;
+		for (int i = 0; i < imagen.getHeight(); i++) {
 			for (int l = 0; l < imagen.getWidth(); l++) {
-				acumulado += bytes[i*imagen.getWidth() + l]; 
-				//System.out.println("["+i+","+l+"]="+bytes[i*imagen.getWidth() + l]);
-			} 
-		} 
-		media = (float)acumulado/(float)tamanoTotalVentana;
+				acumulado += bytes[i * imagen.getWidth() + l];
+				// System.out.println("["+i+","+l+"]="+bytes[i*imagen.getWidth()
+				// + l]);
+			}
+		}
+		media = (float) acumulado / (float) tamanoTotalVentana;
 		return media;
 	}
 
@@ -339,43 +388,47 @@ public class FPanorama extends Function2D {
 	 * @param filaInicioPrimera
 	 * @param columnaInicioPrimera
 	 * @param tamanoVentana
-	 * @throws JIPException 
+	 * @throws JIPException
 	 */
-	private double calcularDivisor(JIPBmpByte imagen, double media) throws JIPException {
+	private double calcularDivisor(JIPBmpByte imagen, double media)
+			throws JIPException {
 		double bytes[] = imagen.getAllPixels();
 		double acumulado = 0;
 		for (int i = 0; i < bytes.length; i++) {
 			double aux = bytes[i] - media;
-			acumulado += aux*aux;
+			acumulado += aux * aux;
 		}
 		return Math.sqrt(acumulado);
 	}
-	
-	class Correlacion implements Comparable<Correlacion>{
+
+	class Correlacion implements Comparable<Correlacion> {
 		private Point2D primerPunto, segundoPunto;
 		private double correlacion;
-		
-		public Correlacion() {}
-		
-		public double getCorrelacion(){
+
+		public Correlacion() {
+		}
+
+		public double getCorrelacion() {
 			return correlacion;
 		}
-		
-		public Point2D getPrimerPunto(){
+
+		public Point2D getPrimerPunto() {
 			return primerPunto;
 		}
-		
-		public Point2D getSegundoPunto(){
+
+		public Point2D getSegundoPunto() {
 			return segundoPunto;
 		}
-		
-		public void setCorrelacion(double corr){
+
+		public void setCorrelacion(double corr) {
 			correlacion = corr;
 		}
-		public void setPrimerPunto(Point2D punto){
+
+		public void setPrimerPunto(Point2D punto) {
 			primerPunto = punto;
 		}
-		public void setSegundoPunto(Point2D punto){
+
+		public void setSegundoPunto(Point2D punto) {
 			segundoPunto = punto;
 		}
 
@@ -388,61 +441,65 @@ public class FPanorama extends Function2D {
 			else
 				return 0;
 		}
-		
+
 		public String toString() {
-			return "["+primerPunto+"]->["+segundoPunto+"]"+correlacion;
+			return "[" + primerPunto + "]->[" + segundoPunto + "]"
+					+ correlacion;
 		}
-		
+
 	}
-	
-	class Recorte{
+
+	class Recorte {
 		private Point2D punto;
 		private JIPImage recorte;
-		
+
 		public Point2D getPunto() {
 			return punto;
 		}
+
 		public JIPImage getRecorte() {
 			return recorte;
 		}
+
 		public void setPunto(Point2D punto) {
 			this.punto = punto;
 		}
+
 		public void setRecorte(JIPImage recorte) {
 			this.recorte = recorte;
 		}
-		
+
 	}
-	
-	public class segmentComparator implements Comparator<Segment>{
+
+	public class segmentComparator implements Comparator<Segment> {
 
 		@Override
 		public int compare(Segment arg0, Segment arg1) {
 			Point2D origen0 = arg0.getBegin();
 			Point2D origen1 = arg1.getBegin();
-			
+
 			Point2D destino0 = arg0.getEnd();
 			Point2D destino1 = arg1.getEnd();
-			
+
 			int desplX0 = destino0.getX() - origen0.getX();
 			int desplY0 = destino0.getY() - origen0.getY();
-			
+
 			int desplX1 = destino1.getX() - origen1.getX();
 			int desplY1 = destino1.getY() - origen1.getY();
-			
-			if(desplX0 > desplX1)
+
+			if (desplX0 > desplX1)
 				return 1;
-			else if(desplX0 == desplX1) {
-				if(desplY0 > desplY1) {
+			else if (desplX0 == desplX1) {
+				if (desplY0 > desplY1) {
 					return 1;
-				}else if(desplY0 < desplY1) {
+				} else if (desplY0 < desplY1) {
 					return -1;
-				}else
+				} else
 					return 0;
-			}else
+			} else
 				return -1;
 		}
-		
+
 	}
-	
+
 }
