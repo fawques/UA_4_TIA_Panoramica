@@ -116,41 +116,95 @@ public class FPanorama extends Function2D {
 			seq.addFrame(previsualizacion);
 			JIPGeomSegment previsualizacionSegmentos = new JIPGeomSegment(
 					previsualizacion.getWidth(), previsualizacion.getHeight());
-			int desplX, desplY;
-			Segment mediana = desplazamientos.get(desplazamientos.size() / 2);
-			desplX = mediana.getBegin().getX() - mediana.getEnd().getX();
-			desplY = mediana.getBegin().getY() - mediana.getEnd().getY();
-			System.out.println("Desplazamiento: [" + desplX + ", " + desplY
-					+ "]");
+			
+			Point2D despl = new Point2D(0,0);
+			if (desplazamientos.size() > 0) {
+				despl = calcularDesplazamiento(desplazamientos);
 
-			for (int j = 0; j < desplazamientos.size(); j++) {
-				Segment segmento = desplazamientos.get(j);
-				Point2D destino = segmento.getEnd();
-				destino.setY(destino.getY() + primera.getHeight());
-				segmento.setEnd(destino);
-				previsualizacionSegmentos.addSegment(segmento);
-			}
-			seq.addFrame(previsualizacionSegmentos);
+				pintarSegmentos(seq, primera, desplazamientos,
+						previsualizacionSegmentos);
 
-			JIPImage panoramica = new JIPBmpColor(1,1);
-			if (desplX >= 0 && desplY >= 0) {
+				JIPImage panoramica = new JIPBmpColor(1, 1);
+
 				panoramica = crearPanoramica(
 						(JIPBmpColor) original.getFrame(i),
-						(JIPBmpColor) original.getFrame(i + 1), desplX, desplY);
-			} else if (desplX >= 0) { // desplY < 0
-				panoramica = new JIPBmpColor(50,100);
-			} else if (desplY >= 0) { // desplX < 0
-				panoramica = new JIPBmpColor(100,50);
-			}else {
-				panoramica = crearPanoramica(
-						(JIPBmpColor) original.getFrame(i + 1),
-						(JIPBmpColor) original.getFrame(i), -desplX, -desplY);
+						(JIPBmpColor) original.getFrame(i + 1), despl.getX(), despl.getY());
+
+				seq.addFrame(panoramica);
+			} else {
+				throw new JIPException(
+						"No se han encontrado suficientes coincidencias para crear la panorámica. Modifica los parámetros o introduce otras imágenes");
 			}
-			seq.addFrame(panoramica);
 		}
 		seq.appendSequence(original);
 
 		return seq;
+	}
+
+	/**
+	 * @param seq
+	 * @param primera
+	 * @param desplazamientos
+	 * @param previsualizacionSegmentos
+	 * @throws JIPException
+	 */
+	private void pintarSegmentos(Sequence seq, JIPBmpByte primera,
+			ArrayList<Segment> desplazamientos,
+			JIPGeomSegment previsualizacionSegmentos) throws JIPException {
+		for (int j = 0; j < desplazamientos.size(); j++) {
+			Segment segmento = desplazamientos.get(j);
+			Point2D destino = segmento.getEnd();
+			destino.setY(destino.getY() + primera.getHeight());
+			segmento.setEnd(destino);
+			previsualizacionSegmentos.addSegment(segmento);
+		}
+		seq.addFrame(previsualizacionSegmentos);
+	}
+
+	/**
+	 * @param desplazamientos
+	 * @param despl
+	 */
+	private Point2D calcularDesplazamiento(ArrayList<Segment> desplazamientos) {
+		Point2D despl = new Point2D(0, 0);
+		ArrayList<Point2D> semimedias = new ArrayList<Point2D>();
+		
+		
+		Segment s1,s2;
+		s1 = desplazamientos.get(0);
+		for(int i = 1; i < desplazamientos.size();i++) {
+			s2 = desplazamientos.get(i);
+			int x1 = s1.getBegin().getX() - s1.getEnd().getX();
+			int y1 = s1.getBegin().getY() - s1.getEnd().getY();
+			int x2 = s2.getBegin().getX() - s2.getEnd().getX();
+			int y2 = s2.getBegin().getY() - s2.getEnd().getY();
+			semimedias.add(new Point2D((x1+x2)/2,(y1+y2)/2));
+			s1 = s2;
+		}
+		
+		Point2D mediana = semimedias
+				.get(semimedias.size() / 2);
+		despl.setX(mediana.getX());
+		despl.setY(mediana.getY());
+
+		Point2D aux1 = semimedias
+				.get(semimedias.size() / 2 - 1);
+		System.out
+				.println("Desplazamiento -1: ["
+						+ (aux1.getX())
+						+ ", "
+						+ (aux1.getY()) + "]");
+
+		System.out.println("Desplazamiento: [" + despl.getX() + ", " + despl.getY()
+				+ "]");
+		aux1 = semimedias
+				.get(semimedias.size() / 2 + 1);
+		System.out
+				.println("Desplazamiento +1: ["
+						+ (aux1.getX())
+						+ ", "
+						+ (aux1.getY()) + "]");
+		return despl;
 	}
 
 	/**
@@ -176,21 +230,46 @@ public class FPanorama extends Function2D {
 		double pixelesAzulSegunda[] = segunda.getAllPixelsBlue();
 		double pixelesVerdeSegunda[] = segunda.getAllPixelsGreen();
 		JIPBmpColor panoramica = new JIPBmpColor(anchoFinal, altoFinal);
+
+		int desplXPrimera = 0;
+		int desplYPrimera = 0;
+		int desplXSegunda = 0;
+		int desplYSegunda = 0;
+
+		if (desplX >= 0 && desplY >= 0) {
+			desplXSegunda = desplX;
+			desplYSegunda = desplY;
+		} else if (desplX >= 0) { // desplY < 0
+			desplXSegunda = desplX;
+			desplYPrimera = -desplY;
+		} else if (desplY >= 0) { // desplX < 0
+			desplXPrimera = -desplX;
+			desplYSegunda = desplY;
+		} else {
+			desplXPrimera = -desplX;
+			desplYPrimera = -desplY;
+		}
 		for (int j = 0; j < pixelesPrimera.length; j++) {
-			panoramica.setPixelBlue(j % primera.getWidth(),
-					j / primera.getWidth(), pixelesAzulPrimera[j]);
-			panoramica.setPixelRed(j % primera.getWidth(),
-					j / primera.getWidth(), pixelesRojoPrimera[j]);
-			panoramica.setPixelGreen(j % primera.getWidth(),
-					j / primera.getWidth(), pixelesVerdePrimera[j]);
+			panoramica.setPixelBlue((j % primera.getWidth()) + desplXPrimera,
+					(j / primera.getWidth()) + desplYPrimera,
+					pixelesAzulPrimera[j]);
+			panoramica.setPixelRed((j % primera.getWidth()) + desplXPrimera,
+					(j / primera.getWidth()) + desplYPrimera,
+					pixelesRojoPrimera[j]);
+			panoramica.setPixelGreen((j % primera.getWidth()) + desplXPrimera,
+					(j / primera.getWidth()) + desplYPrimera,
+					pixelesVerdePrimera[j]);
 		}
 		for (int j = 0; j < pixelesSegunda.length; j++) {
-			panoramica.setPixelBlue(j % segunda.getWidth() + desplX,
-					(j / segunda.getWidth()) + desplY, pixelesAzulSegunda[j]);
-			panoramica.setPixelRed(j % segunda.getWidth() + desplX,
-					(j / segunda.getWidth()) + desplY, pixelesRojoSegunda[j]);
-			panoramica.setPixelGreen(j % segunda.getWidth() + desplX,
-					(j / segunda.getWidth()) + desplY, pixelesVerdeSegunda[j]);
+			panoramica.setPixelBlue((j % segunda.getWidth()) + desplXSegunda,
+					(j / segunda.getWidth()) + desplYSegunda,
+					pixelesAzulSegunda[j]);
+			panoramica.setPixelRed((j % segunda.getWidth()) + desplXSegunda,
+					(j / segunda.getWidth()) + desplYSegunda,
+					pixelesRojoSegunda[j]);
+			panoramica.setPixelGreen((j % segunda.getWidth()) + desplXSegunda,
+					(j / segunda.getWidth()) + desplYSegunda,
+					pixelesVerdeSegunda[j]);
 		}
 		return panoramica;
 	}
