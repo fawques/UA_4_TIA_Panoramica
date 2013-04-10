@@ -116,8 +116,8 @@ public class FPanorama extends Function2D {
 			seq.addFrame(previsualizacion);
 			JIPGeomSegment previsualizacionSegmentos = new JIPGeomSegment(
 					previsualizacion.getWidth(), previsualizacion.getHeight());
-			
-			Point2D despl = new Point2D(0,0);
+
+			Point2D despl = new Point2D(0, 0);
 			if (desplazamientos.size() > 0) {
 				despl = calcularDesplazamiento(desplazamientos);
 
@@ -128,8 +128,15 @@ public class FPanorama extends Function2D {
 
 				panoramica = crearPanoramica(
 						(JIPBmpColor) original.getFrame(i),
-						(JIPBmpColor) original.getFrame(i + 1), despl.getX(), despl.getY());
+						(JIPBmpColor) original.getFrame(i + 1), despl.getX(),
+						despl.getY());
 
+				panoramica = RecorteFinal(panoramica, despl.getX(),
+						despl.getY(), 
+						original.getFrame(i).getWidth(), 
+						original.getFrame(i).getHeight(),
+						original.getFrame(i + 1).getWidth(),
+						original.getFrame(i + 1).getHeight());
 				seq.addFrame(panoramica);
 			} else {
 				throw new JIPException(
@@ -139,6 +146,40 @@ public class FPanorama extends Function2D {
 		seq.appendSequence(original);
 
 		return seq;
+	}
+
+	private JIPImage RecorteFinal(JIPImage panoramica, int desplX, int desplY,
+			int ancho1, int alto1, int ancho2, int alto2) {
+
+		int anchofinal,altofinal;
+		if (desplX >= 0 && desplY >= 0) {
+			anchofinal = Math.max(desplX+ancho2, ancho1);
+			altofinal = Math.max(desplY+alto2, alto1);
+		} else if (desplX >= 0) { // desplY < 0
+			anchofinal = Math.max(desplX+ancho2, ancho1);
+			altofinal = Math.max(-desplY+alto1, alto2);
+		} else if (desplY >= 0) { // desplX < 0
+			anchofinal = Math.max(-desplX+ancho1, ancho2);
+			altofinal = Math.max(desplY+alto2, alto1);
+		} else {
+			anchofinal = Math.max(-desplX+ancho1, ancho2);
+			altofinal = Math.max(-desplY+alto1, alto2);
+		}
+		
+		
+		JIPImage panoramicaFinal = null;
+		try {
+			Crop recorte = new Crop();
+			recorte.setParamValue("y", 0);
+			recorte.setParamValue("x", 0);
+			recorte.setParamValue("w", anchofinal);
+			recorte.setParamValue("h", altofinal);
+			panoramicaFinal = recorte.processImg(panoramica);
+		} catch (JIPException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return panoramicaFinal;
 	}
 
 	/**
@@ -168,42 +209,32 @@ public class FPanorama extends Function2D {
 	private Point2D calcularDesplazamiento(ArrayList<Segment> desplazamientos) {
 		Point2D despl = new Point2D(0, 0);
 		ArrayList<Point2D> semimedias = new ArrayList<Point2D>();
-		
-		
-		Segment s1,s2;
+
+		Segment s1, s2;
 		s1 = desplazamientos.get(0);
-		for(int i = 1; i < desplazamientos.size();i++) {
+		for (int i = 1; i < desplazamientos.size(); i++) {
 			s2 = desplazamientos.get(i);
 			int x1 = s1.getBegin().getX() - s1.getEnd().getX();
 			int y1 = s1.getBegin().getY() - s1.getEnd().getY();
 			int x2 = s2.getBegin().getX() - s2.getEnd().getX();
 			int y2 = s2.getBegin().getY() - s2.getEnd().getY();
-			semimedias.add(new Point2D((x1+x2)/2,(y1+y2)/2));
+			semimedias.add(new Point2D((x1 + x2) / 2, (y1 + y2) / 2));
 			s1 = s2;
 		}
-		
-		Point2D mediana = semimedias
-				.get(semimedias.size() / 2);
+
+		Point2D mediana = semimedias.get(semimedias.size() / 2);
 		despl.setX(mediana.getX());
 		despl.setY(mediana.getY());
 
-		Point2D aux1 = semimedias
-				.get(semimedias.size() / 2 - 1);
-		System.out
-				.println("Desplazamiento -1: ["
-						+ (aux1.getX())
-						+ ", "
-						+ (aux1.getY()) + "]");
+		Point2D aux1 = semimedias.get(semimedias.size() / 2 - 1);
+		System.out.println("Desplazamiento -1: [" + (aux1.getX()) + ", "
+				+ (aux1.getY()) + "]");
 
-		System.out.println("Desplazamiento: [" + despl.getX() + ", " + despl.getY()
-				+ "]");
-		aux1 = semimedias
-				.get(semimedias.size() / 2 + 1);
-		System.out
-				.println("Desplazamiento +1: ["
-						+ (aux1.getX())
-						+ ", "
-						+ (aux1.getY()) + "]");
+		System.out.println("Desplazamiento: [" + despl.getX() + ", "
+				+ despl.getY() + "]");
+		aux1 = semimedias.get(semimedias.size() / 2 + 1);
+		System.out.println("Desplazamiento +1: [" + (aux1.getX()) + ", "
+				+ (aux1.getY()) + "]");
 		return despl;
 	}
 
