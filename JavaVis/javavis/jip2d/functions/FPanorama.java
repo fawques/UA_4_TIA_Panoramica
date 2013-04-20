@@ -89,7 +89,7 @@ public class FPanorama extends Function2D {
 		grises = ctg.processSeq(seq);
 		seq = nitz.processSeq(grises);
 		JIPImage panoramica = null;
-
+		Point2D despl = new Point2D(0, 0);
 		for (int i = 0; i < frames - 1; i++) {// recorremos desde el primero
 												// hasta el penúltimo, y
 												// accedemos siempre a uno y el
@@ -118,9 +118,11 @@ public class FPanorama extends Function2D {
 			JIPGeomSegment previsualizacionSegmentos = new JIPGeomSegment(
 					previsualizacion.getWidth(), previsualizacion.getHeight());
 
-			Point2D despl = new Point2D(0, 0);
+			
 			if (desplazamientos.size() >= 2) { // necesito al menos dos desplazamientos para poder calcular
-				despl = calcularDesplazamiento(desplazamientos);
+				Point2D aux = calcularDesplazamiento(desplazamientos);
+				despl.setX(despl.getX() + aux.getX());
+				despl.setY(despl.getY() + aux.getY());
 
 				pintarSegmentos(seq, primera, desplazamientos,
 						previsualizacionSegmentos);
