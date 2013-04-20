@@ -118,7 +118,7 @@ public class FPanorama extends Function2D {
 					previsualizacion.getWidth(), previsualizacion.getHeight());
 
 			Point2D despl = new Point2D(0, 0);
-			if (desplazamientos.size() > 0) {
+			if (desplazamientos.size() >= 2) { // necesito al menos dos desplazamientos para poder calcular
 				despl = calcularDesplazamiento(desplazamientos);
 
 				pintarSegmentos(seq, primera, desplazamientos,
