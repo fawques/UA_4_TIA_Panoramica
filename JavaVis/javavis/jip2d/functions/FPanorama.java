@@ -237,15 +237,21 @@ public class FPanorama extends Function2D {
 		despl.setX(mediana.getX());
 		despl.setY(mediana.getY());
 
-		Point2D aux1 = semimedias.get(semimedias.size() / 2 - 1);
+		Point2D aux1;// TODO: DEBUG, quitar para la entrega
+		if(semimedias.size() >= 2) {
+		aux1 = semimedias.get(semimedias.size() / 2 - 1);
 		System.out.println("Desplazamiento -1: [" + (aux1.getX()) + ", "
 				+ (aux1.getY()) + "]");
+		}
 
 		System.out.println("Desplazamiento: [" + despl.getX() + ", "
 				+ despl.getY() + "]");
-		aux1 = semimedias.get(semimedias.size() / 2 + 1);
+		if(semimedias.size() >= 3) {
+			aux1 = semimedias.get(semimedias.size() / 2 + 1);
+		
 		System.out.println("Desplazamiento +1: [" + (aux1.getX()) + ", "
 				+ (aux1.getY()) + "]");
+		}
 		return despl;
 	}
 
