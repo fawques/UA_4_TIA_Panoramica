@@ -102,17 +102,36 @@ public class FPanorama extends Function2D {
 			ArrayList<Segment> desplazamientos = recorrerPuntos(nitzPrimera,
 					nitzSegunda, primera, segunda);
 			Collections.sort(desplazamientos, new segmentComparator());
-			JIPBmpByte previsualizacion = new JIPBmpByte(Math.max(
-					primera.getWidth(), segunda.getWidth()),
-					primera.getHeight() + segunda.getHeight());
+			int ancho = Math.max(primera.getWidth(), segunda.getWidth());
+			int alto = primera.getHeight() + segunda.getHeight();
+			JIPBmpByte previsualizacion = new JIPBmpByte(ancho,alto);
 			double[] pixelesPrimera = primera.getAllPixels();
 			double[] pixelesSegunda = segunda.getAllPixels();
-			double[] pixelesPrev = new double[pixelesPrimera.length
-					+ pixelesSegunda.length];
-			System.arraycopy(pixelesPrimera, 0, pixelesPrev, 0,
-					pixelesPrimera.length);
-			System.arraycopy(pixelesSegunda, 0, pixelesPrev,
-					pixelesPrimera.length, pixelesSegunda.length);
+			double[] pixelesPrev = new double[ancho*alto];
+			for(int l = 0,m = 0; l < pixelesPrimera.length;) {
+				if(l % primera.getWidth() != m%ancho){
+					for(; m % ancho != 0; m++) {
+						pixelesPrev[m] = 0;
+					}
+				}
+				else {
+					pixelesPrev[m] = pixelesPrimera[l];
+					m++;
+					l++;
+				}
+			}
+			for(int l = 0,m = ancho*primera.getHeight(); l < pixelesSegunda.length;) {
+				if(l % segunda.getWidth() != m % ancho ){
+					for(; m % ancho != 0; m++) {
+						pixelesPrev[m] = 0;
+					}
+				}
+				else {
+					pixelesPrev[m] = pixelesSegunda[l];
+					m++;
+					l++;
+				}
+			}
 			previsualizacion.setAllPixels(pixelesPrev);
 			previsualizacion.setName("Base_Segmentos_it_"+i);
 			seq.addFrame(previsualizacion);
