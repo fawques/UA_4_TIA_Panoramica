@@ -114,6 +114,7 @@ public class FPanorama extends Function2D {
 			System.arraycopy(pixelesSegunda, 0, pixelesPrev,
 					pixelesPrimera.length, pixelesSegunda.length);
 			previsualizacion.setAllPixels(pixelesPrev);
+			previsualizacion.setName("Base_Segmentos_it_"+i);
 			seq.addFrame(previsualizacion);
 			JIPGeomSegment previsualizacionSegmentos = new JIPGeomSegment(
 					previsualizacion.getWidth(), previsualizacion.getHeight());
@@ -141,11 +142,15 @@ public class FPanorama extends Function2D {
 						original.getFrame(i).getHeight(),
 						original.getFrame(i + 1).getWidth(),
 						original.getFrame(i + 1).getHeight());
+				panoramica.setName("Panoramica_it_" + i);
 				seq.addFrame(panoramica);
 			} else {
 				throw new JIPException(
 						"No se han encontrado suficientes coincidencias para crear la panorámica. Modifica los parámetros o introduce otras imágenes");
 			}
+		}
+		for(int i = 0; i < original.getNumFrames();i++) {
+			original.getFrame(i).setName("Original_"+i);
 		}
 		seq.appendSequence(original);
 
@@ -203,7 +208,9 @@ public class FPanorama extends Function2D {
 			segmento.setEnd(destino);
 			previsualizacionSegmentos.addSegment(segmento);
 		}
+		previsualizacionSegmentos.setName("segmentos");
 		seq.addFrame(previsualizacionSegmentos);
+		
 	}
 
 	/**
