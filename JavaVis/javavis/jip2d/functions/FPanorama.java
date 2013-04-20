@@ -88,6 +88,7 @@ public class FPanorama extends Function2D {
 
 		grises = ctg.processSeq(seq);
 		seq = nitz.processSeq(grises);
+		JIPImage panoramica = null;
 
 		for (int i = 0; i < frames - 1; i++) {// recorremos desde el primero
 												// hasta el penúltimo, y
@@ -124,10 +125,11 @@ public class FPanorama extends Function2D {
 				pintarSegmentos(seq, primera, desplazamientos,
 						previsualizacionSegmentos);
 
-				JIPImage panoramica = new JIPBmpColor(1, 1);
+				if(panoramica == null)
+					panoramica = original.getFrame(i);
 
 				panoramica = crearPanoramica(
-						(JIPBmpColor) original.getFrame(i),
+						(JIPBmpColor) panoramica,
 						(JIPBmpColor) original.getFrame(i + 1), despl.getX(),
 						despl.getY());
 
