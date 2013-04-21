@@ -126,20 +126,22 @@ public class FPanorama extends Function2D {
 				pintarSegmentos(seq, primera, desplazamientos,
 						previsualizacionSegmentos);
 
+				JIPImage originalPrimera = original.getFrame(i);
 				if(panoramica == null)
-					panoramica = original.getFrame(i);
+					panoramica = originalPrimera;
 
+				JIPImage originalSegunda = original.getFrame(i + 1);
 				panoramica = crearPanoramica(
 						(JIPBmpColor) panoramica,
-						(JIPBmpColor) original.getFrame(i + 1), despl.getX(),
+						(JIPBmpColor) originalSegunda, despl.getX(),
 						despl.getY());
 
 				panoramica = RecorteFinal(panoramica, despl.getX(),
 						despl.getY(), 
-						original.getFrame(i).getWidth(), 
-						original.getFrame(i).getHeight(),
-						original.getFrame(i + 1).getWidth(),
-						original.getFrame(i + 1).getHeight());
+						originalPrimera.getWidth(), 
+						originalPrimera.getHeight(),
+						originalSegunda.getWidth(),
+						originalSegunda.getHeight());
 				panoramica.setName("Panorama_" + i);
 				seq.addFrame(panoramica);
 				percProgress += incrementoItem;
