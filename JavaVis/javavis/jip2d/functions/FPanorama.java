@@ -105,13 +105,13 @@ public class FPanorama extends Function2D {
 
 			JIPBmpByte primera = (JIPBmpByte) grises.getFrame(i);
 			JIPBmpByte segunda = (JIPBmpByte) grises.getFrame(i + 1);
-			ArrayList<Segment> desplazamientos = recorrerPuntos(nitzPrimera,
+			ArrayList<Segment> desplazamientos = calcularDesplazamientos(nitzPrimera,
 					nitzSegunda, primera, segunda);
 			percProgress += incrementoItem;
 			Collections.sort(desplazamientos, new segmentComparator());
 			percProgress += incrementoItem;
 			JIPBmpByte previsualizacion = getPrevisualizacion(primera, segunda);
-			previsualizacion.setName("Base_Segmentos_it_"+i);
+			previsualizacion.setName("Base_"+i);
 			seq.addFrame(previsualizacion);
 			percProgress += incrementoItem;
 			JIPGeomSegment previsualizacionSegmentos = new JIPGeomSegment(
@@ -140,7 +140,7 @@ public class FPanorama extends Function2D {
 						original.getFrame(i).getHeight(),
 						original.getFrame(i + 1).getWidth(),
 						original.getFrame(i + 1).getHeight());
-				panoramica.setName("Panoramica_it_" + i);
+				panoramica.setName("Panorama_" + i);
 				seq.addFrame(panoramica);
 				percProgress += incrementoItem;
 			} else {
@@ -372,7 +372,7 @@ public class FPanorama extends Function2D {
 	 *            TODO
 	 * @throws JIPException
 	 */
-	private ArrayList<Segment> recorrerPuntos(JIPGeomPoint nitzPrimera,
+	private ArrayList<Segment> calcularDesplazamientos(JIPGeomPoint nitzPrimera,
 			JIPGeomPoint nitzSegunda, JIPBmpByte primera, JIPBmpByte segunda)
 			throws JIPException {
 		ventana = getParamValueInt("ventana");
