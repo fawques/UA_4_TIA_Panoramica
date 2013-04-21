@@ -73,6 +73,7 @@ public class FPanorama extends Function2D {
 
 	@Override
 	public Sequence processSeq(Sequence seq) throws JIPException {
+		percProgress = 0;
 		int frames = seq.getNumFrames();
 		Sequence original = new Sequence(seq);
 		Sequence grises;
@@ -88,12 +89,17 @@ public class FPanorama extends Function2D {
 
 		grises = ctg.processSeq(seq);
 		seq = nitz.processSeq(grises);
+		
+		int incrementoFrame = 100 / (frames-1);
+		int incrementoItem = incrementoFrame/4;
+		
 		JIPImage panoramica = null;
 		Point2D despl = new Point2D(0, 0);
 		for (int i = 0; i < frames - 1; i++) {// recorremos desde el primero
 												// hasta el penúltimo, y
 												// accedemos siempre a uno y el
 												// siguiente
+			
 			JIPGeomPoint nitzPrimera = (JIPGeomPoint) seq.getFrame(i);
 			JIPGeomPoint nitzSegunda = (JIPGeomPoint) seq.getFrame(i + 1);
 
@@ -101,7 +107,9 @@ public class FPanorama extends Function2D {
 			JIPBmpByte segunda = (JIPBmpByte) grises.getFrame(i + 1);
 			ArrayList<Segment> desplazamientos = recorrerPuntos(nitzPrimera,
 					nitzSegunda, primera, segunda);
+			percProgress += incrementoItem;
 			Collections.sort(desplazamientos, new segmentComparator());
+			percProgress += incrementoItem;
 			int ancho = Math.max(primera.getWidth(), segunda.getWidth());
 			int alto = primera.getHeight() + segunda.getHeight();
 			JIPBmpByte previsualizacion = new JIPBmpByte(ancho,alto);
@@ -135,6 +143,7 @@ public class FPanorama extends Function2D {
 			previsualizacion.setAllPixels(pixelesPrev);
 			previsualizacion.setName("Base_Segmentos_it_"+i);
 			seq.addFrame(previsualizacion);
+			percProgress += incrementoItem;
 			JIPGeomSegment previsualizacionSegmentos = new JIPGeomSegment(
 					previsualizacion.getWidth(), previsualizacion.getHeight());
 
@@ -163,6 +172,7 @@ public class FPanorama extends Function2D {
 						original.getFrame(i + 1).getHeight());
 				panoramica.setName("Panoramica_it_" + i);
 				seq.addFrame(panoramica);
+				percProgress += incrementoItem;
 			} else {
 				throw new JIPException(
 						"No se han encontrado suficientes coincidencias para crear la panorámica. Modifica los parámetros o introduce otras imágenes");
