@@ -110,37 +110,7 @@ public class FPanorama extends Function2D {
 			percProgress += incrementoItem;
 			Collections.sort(desplazamientos, new segmentComparator());
 			percProgress += incrementoItem;
-			int ancho = Math.max(primera.getWidth(), segunda.getWidth());
-			int alto = primera.getHeight() + segunda.getHeight();
-			JIPBmpByte previsualizacion = new JIPBmpByte(ancho,alto);
-			double[] pixelesPrimera = primera.getAllPixels();
-			double[] pixelesSegunda = segunda.getAllPixels();
-			double[] pixelesPrev = new double[ancho*alto];
-			for(int l = 0,m = 0; l < pixelesPrimera.length;) {
-				if(l % primera.getWidth() != m%ancho){
-					for(; m % ancho != 0; m++) {
-						pixelesPrev[m] = 0;
-					}
-				}
-				else {
-					pixelesPrev[m] = pixelesPrimera[l];
-					m++;
-					l++;
-				}
-			}
-			for(int l = 0,m = ancho*primera.getHeight(); l < pixelesSegunda.length;) {
-				if(l % segunda.getWidth() != m % ancho ){
-					for(; m % ancho != 0; m++) {
-						pixelesPrev[m] = 0;
-					}
-				}
-				else {
-					pixelesPrev[m] = pixelesSegunda[l];
-					m++;
-					l++;
-				}
-			}
-			previsualizacion.setAllPixels(pixelesPrev);
+			JIPBmpByte previsualizacion = getPrevisualizacion(primera, segunda);
 			previsualizacion.setName("Base_Segmentos_it_"+i);
 			seq.addFrame(previsualizacion);
 			percProgress += incrementoItem;
@@ -184,6 +154,48 @@ public class FPanorama extends Function2D {
 		seq.appendSequence(original);
 
 		return seq;
+	}
+
+	/**
+	 * @param primera
+	 * @param segunda
+	 * @return
+	 * @throws JIPException
+	 */
+	private JIPBmpByte getPrevisualizacion(JIPBmpByte primera,
+			JIPBmpByte segunda) throws JIPException {
+		int ancho = Math.max(primera.getWidth(), segunda.getWidth());
+		int alto = primera.getHeight() + segunda.getHeight();
+		JIPBmpByte previsualizacion = new JIPBmpByte(ancho,alto);
+		double[] pixelesPrimera = primera.getAllPixels();
+		double[] pixelesSegunda = segunda.getAllPixels();
+		double[] pixelesPrev = new double[ancho*alto];
+		for(int l = 0,m = 0; l < pixelesPrimera.length;) {
+			if(l % primera.getWidth() != m%ancho){
+				for(; m % ancho != 0; m++) {
+					pixelesPrev[m] = 0;
+				}
+			}
+			else {
+				pixelesPrev[m] = pixelesPrimera[l];
+				m++;
+				l++;
+			}
+		}
+		for(int l = 0,m = ancho*primera.getHeight(); l < pixelesSegunda.length;) {
+			if(l % segunda.getWidth() != m % ancho ){
+				for(; m % ancho != 0; m++) {
+					pixelesPrev[m] = 0;
+				}
+			}
+			else {
+				pixelesPrev[m] = pixelesSegunda[l];
+				m++;
+				l++;
+			}
+		}
+		previsualizacion.setAllPixels(pixelesPrev);
+		return previsualizacion;
 	}
 
 	private JIPImage RecorteFinal(JIPImage panoramica, int desplX, int desplY,
