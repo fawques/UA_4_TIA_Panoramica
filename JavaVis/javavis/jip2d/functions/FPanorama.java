@@ -28,6 +28,9 @@ import javavis.jip2d.base.geometrics.Segment;
  */
 public class FPanorama extends Function2D {
 
+	/**
+	 * Tamaño de la ventana para la correlación
+	 */
 	int ventana;
 	/**
 	 * 
@@ -35,7 +38,10 @@ public class FPanorama extends Function2D {
 	private static final long serialVersionUID = 5457374739368893537L;
 
 	/**
-	 * 
+	 * Constructor de FPanorama. Establece tres parámetros:
+	 * FNitzberg = umbral para la función FNitzberg.
+	 * ventana = tamaño de ventana.
+	 * Lambda = umbral de aceptación de correlación. 
 	 */
 	public FPanorama() {
 		name = "Panorámica";
@@ -159,10 +165,10 @@ public class FPanorama extends Function2D {
 	}
 
 	/**
-	 * @param primera
-	 * @param segunda
-	 * @return
-	 * @throws JIPException
+	 * @param primera Primera imagen en escala de grises
+	 * @param segunda Segunda imagen en escala de grises
+	 * @return Imagen compuesta por las que recibe, una encima de la otra
+	 * @throws JIPException JIPException
 	 */
 	private JIPBmpByte getPrevisualizacion(JIPBmpByte primera,
 			JIPBmpByte segunda) throws JIPException {
@@ -200,8 +206,19 @@ public class FPanorama extends Function2D {
 		return previsualizacion;
 	}
 
+	/**
+	 * @param panoramica imagen panorámica con exceso de tamaño
+	 * @param desplX desplazamiento en X
+	 * @param desplY desplazamiento en Y
+	 * @param ancho1 ancho de la primera imagen
+	 * @param alto1 alto de la primera imagen
+	 * @param ancho2 ancho de la segunda imagen
+	 * @param alto2 alto de la segunda imagen
+	 * @return panoramica recortada
+	 * @throws JIPException  JIPException
+	 */
 	private JIPImage RecorteFinal(JIPImage panoramica, int desplX, int desplY,
-			int ancho1, int alto1, int ancho2, int alto2) {
+			int ancho1, int alto1, int ancho2, int alto2) throws JIPException {
 
 		int anchofinal,altofinal;
 		if (desplX >= 0 && desplY >= 0) {
@@ -220,26 +237,21 @@ public class FPanorama extends Function2D {
 		
 		
 		JIPImage panoramicaFinal = null;
-		try {
 			Crop recorte = new Crop();
 			recorte.setParamValue("y", 0);
 			recorte.setParamValue("x", 0);
 			recorte.setParamValue("w", anchofinal);
 			recorte.setParamValue("h", altofinal);
 			panoramicaFinal = recorte.processImg(panoramica);
-		} catch (JIPException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 		return panoramicaFinal;
 	}
 
 	/**
-	 * @param seq
-	 * @param primera
-	 * @param desplazamientos
-	 * @param previsualizacionSegmentos
-	 * @throws JIPException
+	 * @param seq secuencia original, donde agregar la imagen de segmentos
+	 * @param primera primera imagen
+	 * @param desplazamientos ArrayList con los segmentos a pintar
+	 * @param previsualizacionSegmentos imagen resultante con los segmentos pintados
+	 * @throws JIPException JIPException 
 	 */
 	private void pintarSegmentos(Sequence seq, JIPBmpByte primera,
 			ArrayList<Segment> desplazamientos,
@@ -257,8 +269,8 @@ public class FPanorama extends Function2D {
 	}
 
 	/**
-	 * @param desplazamientos
-	 * @param despl
+	 * @param desplazamientos ArrayList con los desplazamientos posibles en forma de segmentos
+	 * @return Point2D que guarda los desplazamientos en X e Y
 	 */
 	private Point2D calcularDesplazamiento(ArrayList<Segment> desplazamientos) {
 		Point2D despl = new Point2D(0, 0);
@@ -299,14 +311,12 @@ public class FPanorama extends Function2D {
 	}
 
 	/**
-	 * @param primera
-	 * @param segunda
-	 * @param pixelesPrimera
-	 * @param pixelesSegunda
-	 * @param desplX
-	 * @param desplY
-	 * @return
-	 * @throws JIPException
+	 * @param primera primera imagen original
+	 * @param segunda segunda imagen original
+	 * @param desplX desplazamiento en X
+	 * @param desplY desplazamiento en Y
+	 * @return Imagen panorámica construida, con el tamaño total de las dos imágenes sumadas
+	 * @throws JIPException JIPException
 	 */
 	private JIPBmpColor crearPanoramica(JIPBmpColor primera,
 			JIPBmpColor segunda, int desplX, int desplY) throws JIPException {
@@ -366,13 +376,12 @@ public class FPanorama extends Function2D {
 	}
 
 	/**
-	 * @param nitzPrimera
-	 * @param nitzSegunda
-	 * @param primera
-	 *            TODO
-	 * @param segunda
-	 *            TODO
-	 * @throws JIPException
+	 * @param nitzPrimera imagen con los puntos característicos de la primera imagen
+	 * @param nitzSegunda imagen con los puntos característicos de la segunda imagen
+	 * @param primera primera imagen en escala de grises
+	 * @param segunda segunda imagen en escala de grises
+	 * @return ArrayList con los desplazamientos calculados en forma de segmentos
+	 * @throws JIPException JIPException
 	 */
 	private ArrayList<Segment> calcularDesplazamientos(JIPGeomPoint nitzPrimera,
 			JIPGeomPoint nitzSegunda, JIPBmpByte primera, JIPBmpByte segunda)
@@ -459,14 +468,10 @@ public class FPanorama extends Function2D {
 	}
 
 	/**
-	 * @param nitz
-	 *            imagen con los puntos calculados por Nitzberg.
-	 * @param imagen
-	 * @param ventana
-	 * @param mediaPrimera
-	 * @param recortados
-	 * @return
-	 * @throws JIPException
+	 * @param nitz imagen con los puntos calculados por Nitzberg.
+	 * @param imagen imagen en escala de grises
+	 * @return ArrayList con un recorte para cada punto válido
+	 * @throws JIPException JIPException
 	 */
 	private ArrayList<Recorte> getRecortes(JIPGeomPoint nitz, JIPBmpByte imagen)
 			throws JIPException {
@@ -529,12 +534,9 @@ public class FPanorama extends Function2D {
 	}
 
 	/**
-	 * @param imagen
-	 * @param ancho
-	 * @param filaInicioPrimera
-	 * @param columnaInicioPrimera
-	 * @param tamanoVentana
-	 * @throws JIPException
+	 * @param imagen ventana de la que calcular la media
+	 * @return media calculada
+	 * @throws JIPException JIPException
 	 */
 	private float calcularMedia(JIPBmpByte imagen) throws JIPException {
 		float media;
@@ -553,12 +555,10 @@ public class FPanorama extends Function2D {
 	}
 
 	/**
-	 * @param imagen
-	 * @param ancho
-	 * @param filaInicioPrimera
-	 * @param columnaInicioPrimera
-	 * @param tamanoVentana
-	 * @throws JIPException
+	 * @param imagen ventana de la que calcular el divisor
+	 * @param media media de la ventana 
+	 * @return divisor para utilizar en la correlación
+	 * @throws JIPException JIPException
 	 */
 	private double calcularDivisor(JIPBmpByte imagen, double media)
 			throws JIPException {
@@ -571,12 +571,13 @@ public class FPanorama extends Function2D {
 		return Math.sqrt(acumulado);
 	}
 
+	/**
+	 * @author Víctor
+	 * Clase Correlacion. Guarda dos puntos (uno de cada imagen) y la correlación entre ellos
+	 */
 	class Correlacion implements Comparable<Correlacion> {
 		private Point2D primerPunto, segundoPunto;
 		private double correlacion;
-
-		public Correlacion() {
-		}
 
 		public double getCorrelacion() {
 			return correlacion;
@@ -602,6 +603,11 @@ public class FPanorama extends Function2D {
 			segundoPunto = punto;
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see java.lang.Comparable#compareTo(java.lang.Object)
+		 * Establece una ordenación de mayor a menor correlación
+		 */
 		@Override
 		public int compareTo(Correlacion o) {
 			if (o.getCorrelacion() > correlacion)
@@ -612,6 +618,10 @@ public class FPanorama extends Function2D {
 				return 0;
 		}
 
+		/*
+		 * (non-Javadoc)
+		 * @see java.lang.Object#toString()
+		 */
 		public String toString() {
 			return "[" + primerPunto + "]->[" + segundoPunto + "]"
 					+ correlacion;
@@ -619,6 +629,10 @@ public class FPanorama extends Function2D {
 
 	}
 
+	/**
+	 * @author Víctor
+	 * Clase Recorte. Guarda un punto central y la imagen recortada a su alrededor.
+	 */
 	class Recorte {
 		private Point2D punto;
 		private JIPImage recorte;
@@ -641,6 +655,10 @@ public class FPanorama extends Function2D {
 
 	}
 
+	/**
+	 * @author Víctor
+	 * Clase SegmentComparator. Establece un orden de comparación de segmentos, ordenados por X y después por Y.
+	 */
 	public class segmentComparator implements Comparator<Segment> {
 
 		@Override
