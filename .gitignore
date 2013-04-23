@@ -43,3 +43,5 @@ Desktop.ini
 *javavis.log
 *path.properties
 *.class*
+
+.~lock.*
