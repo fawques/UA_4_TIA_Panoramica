@@ -55,7 +55,7 @@ public class FPanorama extends Function2D {
 
 		ParamInt p1 = new ParamInt("ventana", false, true);
 		p1.setDescription("Ventana para la correlación cruzada");
-		p1.setDefault(5);
+		p1.setDefault(30);
 		addParam(p1);
 
 		ParamFloat p2 = new ParamFloat("Lambda", false, true);
@@ -100,7 +100,7 @@ public class FPanorama extends Function2D {
 		int incrementoItem = incrementoFrame/4;
 		
 		JIPImage panoramica = null;
-		Point2D despl = new Point2D(0, 0);
+		Point2D anterior = new Point2D(0, 0);
 		for (int i = 0; i < frames - 1; i++) {// recorremos desde el primero
 												// hasta el penúltimo, y
 												// accedemos siempre a uno y el
@@ -125,32 +125,44 @@ public class FPanorama extends Function2D {
 
 			
 			if (desplazamientos.size() >= 2) { // necesito al menos dos desplazamientos para poder calcular
-				Point2D aux = calcularDesplazamiento(desplazamientos);
-				despl.setX(despl.getX() + aux.getX());
-				despl.setY(despl.getY() + aux.getY());
+				Point2D despl = calcularDesplazamiento(desplazamientos);
+				if(anterior.getX()>0)
+					despl.setX(anterior.getX() + despl.getX());
+				if(anterior.getY()>0)
+					despl.setY(anterior.getY() + despl.getY());
 
 				pintarSegmentos(seq, primera, desplazamientos,
 						previsualizacionSegmentos);
 
 				JIPImage originalPrimera = original.getFrame(i);
-				if(panoramica == null)
+				
+				if(panoramica == null) {
 					panoramica = originalPrimera;
+				}
+				
+				JIPImage panoramicaAux = panoramica;
 
 				JIPImage originalSegunda = original.getFrame(i + 1);
+				
 				panoramica = crearPanoramica(
 						(JIPBmpColor) panoramica,
 						(JIPBmpColor) originalSegunda, despl.getX(),
 						despl.getY());
-
+/*
+				if(anterior.getX()<0)
+					despl.setX(anterior.getX() + despl.getX());
+				if(anterior.getY()<0)
+					despl.setY(anterior.getY() + despl.getY());*/
 				panoramica = RecorteFinal(panoramica, despl.getX(),
 						despl.getY(), 
-						originalPrimera.getWidth(), 
-						originalPrimera.getHeight(),
+						panoramicaAux.getWidth(), 
+						panoramicaAux.getHeight(),
 						originalSegunda.getWidth(),
 						originalSegunda.getHeight());
 				panoramica.setName("Panorama_" + i);
 				seq.addFrame(panoramica);
 				percProgress += incrementoItem;
+				anterior = despl;
 			} else {
 				throw new JIPException(
 						"No se han encontrado suficientes coincidencias para crear la panorámica. Modifica los parámetros o introduce otras imágenes");
@@ -303,6 +315,7 @@ public class FPanorama extends Function2D {
 				+ despl.getY() + "]");
 		if(semimedias.size() >= 3) {
 			aux1 = semimedias.get(semimedias.size() / 2 + 1);
+		
 		
 		System.out.println("Desplazamiento +1: [" + (aux1.getX()) + ", "
 				+ (aux1.getY()) + "]");
