@@ -54,7 +54,7 @@ public class FCuentaSegmentos extends Function2D {
 
 		ParamInt p1 = new ParamInt("ventana", false, true);
 		p1.setDescription("Ventana para la correlación cruzada");
-		p1.setDefault(5);
+		p1.setDefault(20);
 		addParam(p1);
 
 		ParamFloat p2 = new ParamFloat("Lambda", false, true);

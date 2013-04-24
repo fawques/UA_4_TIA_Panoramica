@@ -125,7 +125,7 @@ public class FPanorama extends Function2D {
 
 			
 			if (desplazamientos.size() >= 2) { // necesito al menos dos desplazamientos para poder calcular
-				Point2D despl = calcularDesplazamiento(desplazamientos);
+				Point2D despl = calcularTransformacion(desplazamientos);
 				if(anterior.getX()>0)
 					despl.setX(anterior.getX() + despl.getX());
 				if(anterior.getY()>0)
@@ -281,10 +281,11 @@ public class FPanorama extends Function2D {
 	}
 
 	/**
+	 * Función que calcula la transformación final dado un conjunto de desplazamientos posibles
 	 * @param desplazamientos ArrayList con los desplazamientos posibles en forma de segmentos
 	 * @return Point2D que guarda los desplazamientos en X e Y
 	 */
-	private Point2D calcularDesplazamiento(ArrayList<Segment> desplazamientos) {
+	private Point2D calcularTransformacion(ArrayList<Segment> desplazamientos) {
 		Point2D despl = new Point2D(0, 0);
 		ArrayList<Point2D> semimedias = new ArrayList<Point2D>();
 
@@ -303,23 +304,6 @@ public class FPanorama extends Function2D {
 		Point2D mediana = semimedias.get(semimedias.size() / 2);
 		despl.setX(mediana.getX());
 		despl.setY(mediana.getY());
-
-		Point2D aux1;// TODO: DEBUG, quitar para la entrega
-		if(semimedias.size() >= 2) {
-		aux1 = semimedias.get(semimedias.size() / 2 - 1);
-		System.out.println("Desplazamiento -1: [" + (aux1.getX()) + ", "
-				+ (aux1.getY()) + "]");
-		}
-
-		System.out.println("Desplazamiento: [" + despl.getX() + ", "
-				+ despl.getY() + "]");
-		if(semimedias.size() >= 3) {
-			aux1 = semimedias.get(semimedias.size() / 2 + 1);
-		
-		
-		System.out.println("Desplazamiento +1: [" + (aux1.getX()) + ", "
-				+ (aux1.getY()) + "]");
-		}
 		return despl;
 	}
 
